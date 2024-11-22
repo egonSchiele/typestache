@@ -20,7 +20,7 @@ describe("Mustache Parser", () => {
     const template = "This is a {{! comment }} and not parsed.";
     const context = {};
     const result = apply(template, context);
-    expect(result).toBe("This is a and not parsed.");
+    expect(result).toBe("This is a  and not parsed.");
   });
 
   it("should handle section tags correctly when the condition is true", () => {

@@ -36,7 +36,9 @@ const textParser: Parser<SimpleText> = seqC(
 
 const commentTag: Parser<CommentTag> = seqC(
   set("type", "comment"),
-  capture(between(str("{{!"), str("}}"), regexParser("(.+)")), "content")
+  str("{{!"),
+  capture(many1Till(str("}}")), "content"),
+  str("}}")
 );
 
 const partialTag: Parser<PartialTag> = seqC(
