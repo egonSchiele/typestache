@@ -121,7 +121,7 @@ export const genType = (parsed: Mustache[]): string => {
         return null;
       }
       if (content.type === "variable") {
-        return `  ${content.name}: string`;
+        return `  ${content.name}: string | number | boolean`;
       }
       if (content.type === "section") {
         return `  ${content.name}: boolean`;
