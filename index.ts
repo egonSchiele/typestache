@@ -5,10 +5,13 @@ const contents = fs.readFileSync("../sample.md", "utf8");
 const result = mustacheParser(contents);
 console.log(JSON.stringify(result, null, 2));
 
-/* if (result.success) {
-  console.log(genType(result.result));
-} */
+/* const contents2 = fs.readFileSync("../samples/terraform.md", "utf8");
+const result2 = mustacheParser(contents2);
 
+if (result2.success) {
+  console.log(genType(result2.result));
+}
+ */
 console.log(
   apply(contents, {
     name: "Chris",

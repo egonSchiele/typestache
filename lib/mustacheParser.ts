@@ -112,9 +112,11 @@ export const apply = (
   return "";
 };
 
+const uniq = <T>(arr: T[]): T[] => Array.from(new Set(arr));
+
 export const genType = (parsed: Mustache[]): string => {
-  const inner = parsed
-    .map((content) => {
+  const inner = uniq(
+    parsed.map((content) => {
       if (content.type === "text") {
         return null;
       }
@@ -135,6 +137,7 @@ export const genType = (parsed: Mustache[]): string => {
       }
       return null;
     })
+  )
     .filter((x) => x !== null)
     .join(",\n");
   return `{\n${inner}\n}`;
