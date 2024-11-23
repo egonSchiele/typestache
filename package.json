@@ -1,16 +1,26 @@
 {
   "name": "tarstache",
   "type": "module",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "version": "0.1.1",
+  "description": "A mustache parser in tarsec.",
+  "homepage": "https://github.com/egonSchiele/tarstache",
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/index.js",
-    "test": "vitest"
+    "test": "vitest",
+    "coverage": "vitest --coverage",
+    "build": "rm -rf dist && tsc",
+    "start": "cd dist && node index.js"
   },
-  "keywords": [],
-  "author": "",
+  "files": [
+    "./dist/lib"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/lib/index.js",
+      "require": "./dist/lib/index.js"
+    }
+  },
+  "types": "./dist/index.d.ts",
+  "keywords": ["parser", "mustache"],
   "license": "ISC",
   "dependencies": {
     "@types/node": "^22.9.1",

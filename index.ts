@@ -1,9 +1,13 @@
 import fs from "fs";
-import { apply, mustacheParser } from "./lib/mustacheParser.js";
+import { apply, genType, mustacheParser } from "./lib/mustacheParser.js";
 
-const contents = fs.readFileSync("sample.md", "utf8");
+const contents = fs.readFileSync("../sample.md", "utf8");
 const result = mustacheParser(contents);
 console.log(JSON.stringify(result, null, 2));
+
+/* if (result.success) {
+  console.log(genType(result.result));
+} */
 
 console.log(
   apply(contents, {
