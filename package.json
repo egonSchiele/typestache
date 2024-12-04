@@ -1,7 +1,7 @@
 {
   "name": "tarstache",
   "type": "module",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "A mustache parser in tarsec.",
   "homepage": "https://github.com/egonSchiele/tarstache",
   "scripts": {
