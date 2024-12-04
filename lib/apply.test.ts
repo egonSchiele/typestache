@@ -37,6 +37,20 @@ describe("Mustache Parser", () => {
     expect(result).toBe("");
   });
 
+  it("should handle variables nested within sections", () => {
+    const template = "{{#user}}{{name}}{{/user}}";
+    const context = { user: { name: "Adit" } };
+    const result = apply(template, context);
+    expect(result).toBe("Adit");
+  });
+
+  it("should handle top level variables nested within sections", () => {
+    const template = "{{#user}}{{greeting}}{{/user}}";
+    const context = { user: { name: "Adit" }, greeting: "Hello" };
+    const result = apply(template, context);
+    expect(result).toBe("Hello");
+  });
+
   it("should handle inverted tags correctly when the condition is false", () => {
     const template = "{{^condition}}Inverted content{{/condition}}";
     const context = { condition: false };

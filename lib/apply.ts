@@ -13,12 +13,12 @@ export const applyParsed = (
       }
       if (content.type === "variable") {
         return renderVariable(
-          deepSeek(obj, [...currentContext, ...content.name]),
+          deepSeek(obj, [...content.name], [...currentContext]),
           !content.triple
         );
       }
       if (content.type === "section") {
-        const value = deepSeek(obj, content.name);
+        const value = deepSeek(obj, [...content.name], [...currentContext]);
         if (!value) {
           return "";
         } else if (Array.isArray(value)) {
@@ -26,11 +26,16 @@ export const applyParsed = (
             .map((item) => applyParsed(content.content, item))
             .join("");
         } else {
-          return applyParsed(content.content, value);
+          const str = applyParsed(content.content, value);
+          if (str === "") {
+            // try to find the variable in the parent context
+            return applyParsed(content.content, obj);
+          }
+          return str;
         }
       }
       if (content.type === "inverted") {
-        const value = deepSeek(obj, content.name);
+        const value = deepSeek(obj, [...content.name], [...currentContext]);
         return value ? "" : applyParsed(content.content, obj);
       }
       if (content.type === "comment") {
@@ -40,7 +45,7 @@ export const applyParsed = (
         return `{{>${content.name}}}`;
       }
       if (content.type === "implicit-variable") {
-        const value = deepSeek(obj, currentContext);
+        const value = deepSeek(obj, [...currentContext], []);
         return renderVariable(value, !content.triple);
       }
       return "";
@@ -100,13 +105,38 @@ Finally, even in the context, you can reference a top level variable:
 {{#user}}{{greeting}}{{/user}}
 ```
 */
-const deepSeek = (obj: TemplateParams, name: string[]): any => {
+/* const deepSeek = (
+  obj: TemplateParams,
+  name: string[],
+  context: string[]
+): any => {
+  const value = _deepSeek(obj, name);
+  if (value !== "") {
+    return value;
+  }
+
+  if (context.length > 0) {
+    return _deepSeek(obj, [...context, ...name]);
+  }
+  return "";
+};
+ */
+const deepSeek = (
+  obj: TemplateParams,
+  _name: string[],
+  context: string[]
+): any => {
+  const name = [...context, ..._name];
   if (
     typeof obj === "string" ||
     typeof obj === "boolean" ||
     typeof obj === "number"
   ) {
-    return obj;
+    if (name.length === 0) {
+      return obj;
+    } else {
+      return "";
+    }
   }
 
   let current = obj;
