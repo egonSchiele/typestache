@@ -7,19 +7,19 @@ export type MustacheTag =
 
 export type VariableTag = {
   type: "variable";
-  name: string;
+  name: string[];
   triple: boolean;
 };
 
 export type SectionTag = {
   type: "section";
-  name: string;
+  name: string[];
   content: Mustache[];
 };
 
 export type InvertedTag = {
   type: "inverted";
-  name: string;
+  name: string[];
   content: Mustache[];
 };
 
@@ -30,7 +30,7 @@ export type CommentTag = {
 
 export type PartialTag = {
   type: "partial";
-  name: string;
+  name: string[];
 };
 
 export type Mustache = MustacheTag | SimpleText;

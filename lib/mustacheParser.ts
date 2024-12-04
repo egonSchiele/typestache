@@ -13,6 +13,8 @@ import {
   char,
   spaces,
   optional,
+  sepBy,
+  failure,
 } from "tarsec";
 
 import {
@@ -25,7 +27,19 @@ import {
   VariableTag,
 } from "./types.js";
 
-const tagName: Parser<string> = regexParser("([a-zA-Z0-9_]+)");
+const _tagName: Parser<string[]> = sepBy(
+  char("."),
+  regexParser("([a-zA-Z0-9_]+)")
+);
+
+const tagName: Parser<string[]> = (input: string) => {
+  const result = _tagName(input);
+  if (result.success && result.result.length > 0) {
+    return result;
+  } else {
+    return failure("must have at least one tag name", input);
+  }
+};
 
 const doubleVariableTag: Parser<VariableTag> = seqC(
   set("type", "variable"),
@@ -39,7 +53,7 @@ const tripleVariableTag: Parser<VariableTag> = seqC(
   set("triple", true)
 );
 
-const ampersandVariableTag: Parser<VariableTag> = seqC(
+/* const ampersandVariableTag: Parser<VariableTag> = seqC(
   set("type", "variable"),
   str("{{&"),
   optional(spaces),
@@ -47,10 +61,10 @@ const ampersandVariableTag: Parser<VariableTag> = seqC(
   str("}}"),
   set("triple", true)
 );
-
+ */
 const variableTag: Parser<VariableTag> = or(
   tripleVariableTag,
-  ampersandVariableTag,
+  /*   ampersandVariableTag, */
   doubleVariableTag
 );
 
@@ -99,7 +113,8 @@ export const mustacheParser: Parser<Mustache[]> = many1(
 
 export const applyParsed = (
   contents: Mustache[],
-  obj: Record<string, any>
+  obj: Record<string, any>,
+  currentContext: string[] = []
 ): string => {
   return contents
     .map((content) => {
@@ -107,13 +122,18 @@ export const applyParsed = (
         return content.content;
       }
       if (content.type === "variable") {
-        return applyVariable(content, obj[content.name]);
+        return applyVariable(
+          content,
+          resolveDottedVariable(obj, [...currentContext, ...content.name])
+        );
       }
       if (content.type === "section") {
-        return obj[content.name] ? applyParsed(content.content, obj) : "";
+        const variable = resolveDottedVariable(obj, content.name);
+        return variable ? applyParsed(content.content, obj, content.name) : "";
       }
       if (content.type === "inverted") {
-        return obj[content.name] ? "" : applyParsed(content.content, obj);
+        const variable = resolveDottedVariable(obj, content.name);
+        return variable ? "" : applyParsed(content.content, obj);
       }
       if (content.type === "comment") {
         return "";
@@ -124,6 +144,20 @@ export const applyParsed = (
       return "";
     })
     .join("");
+};
+
+const resolveDottedVariable = (
+  obj: Record<string, any>,
+  name: string[]
+): any => {
+  let current = obj;
+  for (const key of name) {
+    if (current[key] === undefined) {
+      return "";
+    }
+    current = current[key];
+  }
+  return current;
 };
 
 const escapedCharacters: { [key: string]: string } = {
