@@ -8,6 +8,7 @@ export type MustacheTag =
 export type VariableTag = {
   type: "variable";
   name: string;
+  triple: boolean;
 };
 
 export type SectionTag = {

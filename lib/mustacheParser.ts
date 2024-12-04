@@ -10,6 +10,9 @@ import {
   set,
   str,
   Parser,
+  char,
+  spaces,
+  optional,
 } from "tarsec";
 
 import {
@@ -24,9 +27,31 @@ import {
 
 const tagName: Parser<string> = regexParser("([a-zA-Z0-9_]+)");
 
-const variableTag: Parser<VariableTag> = seqC(
+const doubleVariableTag: Parser<VariableTag> = seqC(
   set("type", "variable"),
-  capture(between(str("{{"), str("}}"), tagName), "name")
+  capture(between(str("{{"), str("}}"), tagName), "name"),
+  set("triple", false)
+);
+
+const tripleVariableTag: Parser<VariableTag> = seqC(
+  set("type", "variable"),
+  capture(between(str("{{{"), str("}}}"), tagName), "name"),
+  set("triple", true)
+);
+
+const ampersandVariableTag: Parser<VariableTag> = seqC(
+  set("type", "variable"),
+  str("{{&"),
+  optional(spaces),
+  capture(many1Till(str("}}")), "name"),
+  str("}}"),
+  set("triple", true)
+);
+
+const variableTag: Parser<VariableTag> = or(
+  tripleVariableTag,
+  ampersandVariableTag,
+  doubleVariableTag
 );
 
 const textParser: Parser<SimpleText> = seqC(
@@ -74,7 +99,7 @@ export const mustacheParser: Parser<Mustache[]> = many1(
 
 export const applyParsed = (
   contents: Mustache[],
-  obj: Record<string, string | boolean | number>
+  obj: Record<string, any>
 ): string => {
   return contents
     .map((content) => {
@@ -82,7 +107,7 @@ export const applyParsed = (
         return content.content;
       }
       if (content.type === "variable") {
-        return obj[content.name] as string;
+        return applyVariable(content, obj[content.name]);
       }
       if (content.type === "section") {
         return obj[content.name] ? applyParsed(content.content, obj) : "";
@@ -101,10 +126,33 @@ export const applyParsed = (
     .join("");
 };
 
-export const apply = (
-  str: string,
-  obj: Record<string, string | boolean | number>
-): string => {
+const escapedCharacters: { [key: string]: string } = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&apos;",
+};
+
+const applyVariable = (content: VariableTag, variable: any): string => {
+  if (variable === undefined || variable === null) {
+    return "";
+  }
+
+  let str = variable;
+  if (typeof variable === "number") {
+    str = variable.toString();
+  }
+
+  if (!content.triple) {
+    for (const [key, value] of Object.entries(escapedCharacters)) {
+      str = str.replaceAll(key, value);
+    }
+  }
+  return str;
+};
+
+export const apply = (str: string, obj: Record<string, any>): string => {
   const parsed = mustacheParser(str);
   if (parsed.success) {
     return applyParsed(parsed.result, obj);

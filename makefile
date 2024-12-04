@@ -5,4 +5,4 @@ test:
 	npm run test
 
 publish:
-	npm publish
+	npm run build && npm publish
