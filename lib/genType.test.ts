@@ -382,7 +382,7 @@ describe("genType", () => {
 }`);
   });
 
-  it("type hint + scope is global + same name var untyped", () => {
+  it("type hint + scope is global + same name global var untyped in section", () => {
     const parsed: Mustache[] = [
       {
         type: "variable",
@@ -407,6 +407,102 @@ describe("genType", () => {
     expect(result).toBe(`{
   name: string;
   user: boolean;
+}`);
+  });
+
+  it("type hint + scope is LOCAL + same name local var untyped in section", () => {
+    const parsed: Mustache[] = [
+      {
+        type: "section",
+        name: ["user"],
+        content: [
+          {
+            type: "variable",
+            triple: false,
+            name: ["name"],
+            varType: ["string"],
+            scope: "local",
+          },
+          {
+            type: "variable",
+            triple: false,
+            name: ["name"],
+            scope: "local",
+          },
+        ],
+      },
+    ];
+    const result = genType(parsed);
+    expect(result).toBe(`{
+  user: {
+    name: string;
+  };
+}`);
+  });
+
+  it("type hint + scope is LOCAL + same name var untyped in section with unclear scope", () => {
+    const parsed: Mustache[] = [
+      {
+        type: "section",
+        name: ["user"],
+        content: [
+          {
+            type: "variable",
+            triple: false,
+            name: ["name"],
+            varType: ["string"],
+            scope: "local",
+          },
+          {
+            type: "variable",
+            triple: false,
+            name: ["name"],
+          },
+        ],
+      },
+    ];
+    const result = genType(parsed);
+    expect(result).toBe(`{
+  user: {
+    name: string;
+  };
+  name?: string | boolean | number;
+}`);
+  });
+
+  it("different type hints for local and global scope + same name var untyped in section with unclear scope", () => {
+    const parsed: Mustache[] = [
+      {
+        type: "variable",
+        triple: false,
+        name: ["name"],
+        varType: ["string"],
+      },
+      {
+        type: "section",
+        name: ["user"],
+        content: [
+          {
+            type: "variable",
+            triple: false,
+            name: ["name"],
+            varType: ["number"],
+            scope: "local",
+          },
+          {
+            type: "variable",
+            triple: false,
+            name: ["name"],
+          },
+        ],
+      },
+    ];
+    const result = genType(parsed);
+    expect(result).toBe(`{
+  user: {
+    name: number;
+  };
+  name: string;
 }`);
   });
 });

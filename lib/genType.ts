@@ -41,7 +41,9 @@ export const nestedObj = (
         // default type, so ignore
       } else {
         // we have a type conflict
-        throw new Error(`${key} was previously set to ${obj[key]} and is now being set to ${typeToSet}`);
+        throw new Error(
+          `${key} was previously set to ${obj[key]} and is now being set to ${typeToSet}`
+        );
       }
       //obj[key] = uniq([...obj[key], ...typeToSet]);
     } else {
@@ -82,10 +84,7 @@ export const mergeObj = (obj1: Obj, obj2: Obj): Obj => {
       throw new Error(`key is not a string: ${key}`);
     }
 
-    if (
-      typeof obj1[key] === "object" &&
-      typeof obj2[key] === "object"
-    ) {
+    if (typeof obj1[key] === "object" && typeof obj2[key] === "object") {
       newObj[key] = mergeObj(obj1[key] as Obj, obj2[key] as Obj);
     } else if (obj1[key] === undefined) {
       newObj[key] = obj2[key];
@@ -256,5 +255,6 @@ export const genType = (parsed: Mustache[]): string => {
     }
     return null;
   });
+  console.log(JSON.stringify(obj, null, 2));
   return renderObj(obj);
 };

@@ -1,23 +1,34 @@
 import fs from "fs";
 import { mustacheParser } from "./lib/mustacheParser.js";
 import { apply } from "./lib/apply.js";
+import { genType } from "./lib/genType.js";
+import { Mustache } from "./lib/types.js";
 
-const contents = fs.readFileSync("../sample.md", "utf8");
-const result = mustacheParser(contents);
-console.log(JSON.stringify(result, null, 2));
-
-/* const contents2 = fs.readFileSync("../samples/terraform.md", "utf8");
-const result2 = mustacheParser(contents2);
-
-if (result2.success) {
-  console.log(genType(result2.result));
-}
- */
-console.log(
-  apply(contents, {
-    name: "Chris",
-    value: 10000,
-    taxed_value: 10000 - 10000 * 0.4,
-    in_ca: true,
-  })
-);
+const parsed: Mustache[] = [
+  {
+    type: "variable",
+    triple: false,
+    name: ["name"],
+    varType: ["string"],
+  },
+  {
+    type: "section",
+    name: ["user"],
+    content: [
+      {
+        type: "variable",
+        triple: false,
+        name: ["name"],
+        varType: ["number"],
+        scope: "local",
+      },
+      {
+        type: "variable",
+        triple: false,
+        name: ["name"],
+      },
+    ],
+  },
+];
+const result = genType(parsed);
+console.log(result);
