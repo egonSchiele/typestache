@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { apply } from "./apply.js";
+import { mustacheParser } from "./mustacheParser.js";
 
 describe("Mustache Parser", () => {
   it("should parse variable tags correctly", () => {
@@ -85,5 +86,29 @@ describe("Mustache Parser", () => {
     const context = {};
     const result = apply(template, context);
     expect(result).toBe("");
+  });
+
+  it("should handle local vars", () => {
+    const template = "{{#person}}{{this.name}}{{/person}}";
+    const context = {
+      person: {
+        name: "Adit",
+      },
+      name: "Not Adit",
+    };
+    const result = apply(template, context);
+    expect(result).toBe("Adit");
+  });
+
+  it("should handle global vars", () => {
+    const template = "{{#person}}{{global.name}}{{/person}}";
+    const context = {
+      person: {
+        name: "Adit",
+      },
+      name: "Not Adit",
+    };
+    const result = apply(template, context);
+    expect(result).toBe("Not Adit");
   });
 });

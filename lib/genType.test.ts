@@ -147,4 +147,85 @@ describe("genType", () => {
   name?: string | boolean | number;
 }`);
   });
+
+  it("If a variable is optional in one context but required in another, render it as required", () => {
+    const parsed: Mustache[] = [
+      {
+        type: "section",
+        name: ["user"],
+        content: [{ type: "variable", triple: false, name: ["name"] }],
+      },
+      {
+        type: "variable",
+        name: ["name"],
+        triple: false,
+      },
+    ];
+    const result = genType(parsed);
+    expect(result).toBe(`{
+  user: {
+    name?: string | boolean | number;
+  } | boolean;
+  name: string | boolean | number;
+}`);
+  });
+
+  it("If a variable is marked local to a context, render the correct type", () => {
+    const parsed: Mustache[] = [
+      {
+        type: "section",
+        name: ["user"],
+        content: [
+          { type: "variable", triple: false, name: ["name"], scope: "local" },
+        ],
+      },
+    ];
+    const result = genType(parsed);
+    expect(result).toBe(`{
+  user: {
+    name: string | boolean | number;
+  };
+}`);
+  });
+
+  it("If a variable is marked local to a context, render the correct type, including a var with the same name in global scope", () => {
+    const parsed: Mustache[] = [
+      {
+        type: "section",
+        name: ["user"],
+        content: [
+          { type: "variable", triple: false, name: ["name"], scope: "local" },
+        ],
+      },
+      {
+        type: "variable",
+        name: ["name"],
+        triple: false,
+      },
+    ];
+    const result = genType(parsed);
+    expect(result).toBe(`{
+  user: {
+    name: string | boolean | number;
+  };
+  name: string | boolean | number;
+}`);
+  });
+
+  it("If a variable is marked global inside a context, render the correct type", () => {
+    const parsed: Mustache[] = [
+      {
+        type: "section",
+        name: ["user"],
+        content: [
+          { type: "variable", triple: false, name: ["name"], scope: "global" },
+        ],
+      },
+    ];
+    const result = genType(parsed);
+    expect(result).toBe(`{
+  user: boolean;
+  name: string | boolean | number;
+}`);
+  });
 });

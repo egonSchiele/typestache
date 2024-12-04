@@ -10,6 +10,7 @@ export type VariableTag = {
   type: "variable";
   name: string[];
   triple: boolean;
+  scope?: "local" | "global";
 };
 
 export type ImplicitVariableTag = {

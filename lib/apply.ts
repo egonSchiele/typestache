@@ -1,9 +1,14 @@
 import { mustacheParser } from "./mustacheParser.js";
 import { Mustache, TemplateParams } from "./types.js";
 
-export const applyParsed = (
+export const applyParsed = (contents: Mustache[], obj: TemplateParams) => {
+  return _applyParsed(contents, obj, obj);
+};
+
+export const _applyParsed = (
   contents: Mustache[],
   obj: TemplateParams,
+  globalObj: TemplateParams,
   currentContext: string[] = []
 ): string => {
   return contents
@@ -12,6 +17,12 @@ export const applyParsed = (
         return content.content;
       }
       if (content.type === "variable") {
+        if (content.scope === "global") {
+          return renderVariable(
+            deepSeek(globalObj, [...content.name], []),
+            !content.triple
+          );
+        }
         return renderVariable(
           deepSeek(obj, [...content.name], [...currentContext]),
           !content.triple
@@ -23,20 +34,20 @@ export const applyParsed = (
           return "";
         } else if (Array.isArray(value)) {
           return value
-            .map((item) => applyParsed(content.content, item))
+            .map((item) => _applyParsed(content.content, item, globalObj))
             .join("");
         } else {
-          const str = applyParsed(content.content, value);
+          const str = _applyParsed(content.content, value, globalObj);
           if (str === "") {
             // try to find the variable in the parent context
-            return applyParsed(content.content, obj);
+            return _applyParsed(content.content, obj, globalObj);
           }
           return str;
         }
       }
       if (content.type === "inverted") {
         const value = deepSeek(obj, [...content.name], [...currentContext]);
-        return value ? "" : applyParsed(content.content, obj);
+        return value ? "" : _applyParsed(content.content, obj, globalObj);
       }
       if (content.type === "comment") {
         return "";
@@ -127,6 +138,7 @@ const deepSeek = (
   context: string[]
 ): any => {
   const name = [...context, ..._name];
+
   if (
     typeof obj === "string" ||
     typeof obj === "boolean" ||

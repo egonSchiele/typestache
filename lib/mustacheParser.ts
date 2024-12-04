@@ -6,7 +6,7 @@ import {
   failure,
   many1,
   many1Till,
-  newline,
+  map,
   optional,
   or,
   regexParser,
@@ -42,6 +42,23 @@ const tagName: Parser<string[]> = (input: string) => {
   }
 };
 
+const captureWithScope = (captures: VariableTag): VariableTag => {
+  if (captures.name[0] === "this") {
+    return {
+      ...captures,
+      scope: "local",
+      name: captures.name.slice(1),
+    };
+  } else if (captures.name[0] === "global") {
+    return {
+      ...captures,
+      scope: "global",
+      name: captures.name.slice(1),
+    };
+  }
+  return captures;
+};
+
 const doubleVariableTag: Parser<VariableTag> = seqC(
   set("type", "variable"),
   str("{{"),
@@ -74,10 +91,9 @@ const ampersandVariableTag: Parser<VariableTag> = seqC(
   set("triple", true)
 );
 
-const variableTag: Parser<VariableTag> = or(
-  tripleVariableTag,
-  ampersandVariableTag,
-  doubleVariableTag
+const variableTag: Parser<VariableTag> = map(
+  or(tripleVariableTag, ampersandVariableTag, doubleVariableTag),
+  captureWithScope
 );
 
 const doubleImplicitVariableTag: Parser<ImplicitVariableTag> = seqC(
