@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import data from "./interpolation.json";
-import { apply } from "../mustacheParser.js";
+import { apply } from "../apply.js";
 
 type Test = {
   name: string;
@@ -8,10 +8,14 @@ type Test = {
   data?: Record<string, any> | string | number;
   template: string;
   expected: string;
+  skip?: boolean;
 };
 
 const tests: Test[] = data.tests;
-tests.forEach(({ name, desc, data, template, expected }) => {
+tests.forEach(({ name, desc, data, template, expected, skip }) => {
+  if (skip) {
+    return;
+  }
   describe(name, () => {
     test(desc, () => {
       const actual = apply(template, data || {});

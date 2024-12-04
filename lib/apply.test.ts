@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { apply } from "./mustacheParser.js";
+import { apply } from "./apply.js";
 
 describe("Mustache Parser", () => {
   it("should parse variable tags correctly", () => {
