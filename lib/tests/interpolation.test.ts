@@ -5,7 +5,7 @@ import { apply } from "../mustacheParser.js";
 type Test = {
   name: string;
   desc: string;
-  data?: Record<string, any>;
+  data?: Record<string, any> | string | number;
   template: string;
   expected: string;
 };

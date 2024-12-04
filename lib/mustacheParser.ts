@@ -25,6 +25,7 @@ import {
   PartialTag,
   SectionTag,
   SimpleText,
+  TemplateParams,
   VariableTag,
 } from "./types.js";
 
@@ -147,7 +148,7 @@ export const mustacheParser: Parser<Mustache[]> = many1(
 
 export const applyParsed = (
   contents: Mustache[],
-  obj: Record<string, any>,
+  obj: TemplateParams,
   currentContext: string[] = []
 ): string => {
   return contents
@@ -156,18 +157,18 @@ export const applyParsed = (
         return content.content;
       }
       if (content.type === "variable") {
-        return applyVariable(
-          content,
-          resolveDottedVariable(obj, [...currentContext, ...content.name])
+        return renderVariable(
+          deepSeek(obj, [...currentContext, ...content.name]),
+          !content.triple
         );
       }
       if (content.type === "section") {
-        const variable = resolveDottedVariable(obj, content.name);
-        return variable ? applyParsed(content.content, obj, content.name) : "";
+        const value = deepSeek(obj, content.name);
+        return value ? applyParsed(content.content, obj, content.name) : "";
       }
       if (content.type === "inverted") {
-        const variable = resolveDottedVariable(obj, content.name);
-        return variable ? "" : applyParsed(content.content, obj);
+        const value = deepSeek(obj, content.name);
+        return value ? "" : applyParsed(content.content, obj);
       }
       if (content.type === "comment") {
         return "";
@@ -176,22 +177,23 @@ export const applyParsed = (
         return `{{>${content.name}}}`;
       }
       if (content.type === "implicit-variable") {
-        const variable = resolveDottedVariable(obj, currentContext);
-        const str = variable ? variable.toString() : "";
-        if (content.triple) {
-          return str;
-        }
-        return escapeHTML(str);
+        const value = deepSeek(obj, currentContext);
+        return renderVariable(value, !content.triple);
       }
       return "";
     })
     .join("");
 };
 
-const resolveDottedVariable = (
-  obj: Record<string, any>,
-  name: string[]
-): any => {
+const deepSeek = (obj: TemplateParams, name: string[]): any => {
+  if (
+    typeof obj === "string" ||
+    typeof obj === "boolean" ||
+    typeof obj === "number"
+  ) {
+    return obj;
+  }
+
   let current = obj;
   for (const key of name) {
     if (current[key] === undefined) {
@@ -218,7 +220,7 @@ const escapeHTML = (_str: string): string => {
   return str;
 };
 
-const applyVariable = (content: VariableTag, variable: any): string => {
+const renderVariable = (variable: any, escape: boolean): string => {
   if (variable === undefined || variable === null) {
     return "";
   }
@@ -228,13 +230,13 @@ const applyVariable = (content: VariableTag, variable: any): string => {
     str = variable.toString();
   }
 
-  if (!content.triple) {
+  if (escape) {
     return escapeHTML(str);
   }
   return str;
 };
 
-export const apply = (str: string, obj: Record<string, any>): string => {
+export const apply = (str: string, obj: TemplateParams): string => {
   const parsed = mustacheParser(str);
   if (parsed.success) {
     return applyParsed(parsed.result, obj);

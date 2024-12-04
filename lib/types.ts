@@ -45,3 +45,5 @@ export type SimpleText = {
   type: "text";
   content: string;
 };
+
+export type TemplateParams = Record<string, any> | string | number | boolean;
