@@ -314,4 +314,45 @@ describe("genType", () => {
   name?: string;
 }`);
   });
+
+  it("A variable's type hint needs to only be set to once", () => {
+    const parsed: Mustache[] = [
+      {
+        type: "variable",
+        triple: false,
+        name: ["name"],
+        varType: ["string"],
+      },
+      {
+        type: "variable",
+        triple: false,
+        name: ["name"],
+      },
+    ];
+    const result = genType(parsed);
+    expect(result).toBe(`{
+  name: string;
+}`);
+  });
+
+  it("Conflicting type hints should raise an error", () => {
+    const parsed: Mustache[] = [
+      {
+        type: "variable",
+        triple: false,
+        name: ["name"],
+        varType: ["string"],
+      },
+      {
+        type: "variable",
+        triple: false,
+        name: ["name"],
+        varType: ["boolean"],
+      },
+    ];
+    const result = genType(parsed);
+    expect(result).toBe(`{
+  name: string;
+}`);
+  });
 });
