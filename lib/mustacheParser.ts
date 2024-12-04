@@ -11,6 +11,7 @@ import {
   or,
   regexParser,
   sepBy,
+  seq,
   seqC,
   set,
   spaces,
@@ -42,6 +43,19 @@ const tagName: Parser<string[]> = (input: string) => {
   }
 };
 
+const varType: Parser<string[]> = seq(
+  [
+    optional(spaces),
+    str(":"),
+    optional(spaces),
+    capture(
+      sepBy(or(str(" | "), char("|")), regexParser("([a-zA-Z0-9_]+)")),
+      "varType"
+    ),
+  ],
+  (r: any, c: any) => c.varType
+);
+
 const captureWithScope = (captures: VariableTag): VariableTag => {
   if (captures.name[0] === "this") {
     return {
@@ -64,6 +78,7 @@ const doubleVariableTag: Parser<VariableTag> = seqC(
   str("{{"),
   optional(spaces),
   capture(tagName, "name"),
+  optional(capture(varType, "varType")),
   optional(spaces),
   str("}}"),
   set("triple", false)
@@ -74,6 +89,7 @@ const tripleVariableTag: Parser<VariableTag> = seqC(
   str("{{{"),
   optional(spaces),
   capture(tagName, "name"),
+  optional(capture(varType, "varType")),
   optional(spaces),
   str("}}}"),
   set("triple", true)
@@ -86,6 +102,7 @@ const ampersandVariableTag: Parser<VariableTag> = seqC(
   char("&"),
   optional(spaces),
   capture(tagName, "name"),
+  optional(capture(varType, "varType")),
   optional(spaces),
   str("}}"),
   set("triple", true)

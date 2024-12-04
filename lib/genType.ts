@@ -32,15 +32,16 @@ export const nestedObj = (
   }
 
   if (!obj[key]) {
-    obj[key] = keys.length === 1 ? [...typeToSet] : nestedObj(keys.slice(1));
+    obj[key] =
+      keys.length === 1 ? [...typeToSet] : nestedObj(keys.slice(1), typeToSet);
   } else if (Array.isArray(obj[key])) {
     if (keys.length === 1) {
       obj[key] = uniq([...obj[key], ...typeToSet]);
     } else {
-      obj[key] = uniq([...obj[key], nestedObj(keys.slice(1))]);
+      obj[key] = uniq([...obj[key], nestedObj(keys.slice(1), typeToSet)]);
     }
   } else if (typeof obj[key] === "object") {
-    obj[key] = nestedObj(keys.slice(1));
+    obj[key] = nestedObj(keys.slice(1), typeToSet);
   }
   return obj;
 };
@@ -177,7 +178,10 @@ export const genType = (parsed: Mustache[]): string => {
       return null;
     }
     if (content.type === "variable") {
-      obj = mergeObj(obj, nestedObj(content.name));
+      obj = mergeObj(
+        obj,
+        nestedObj(content.name, content.varType || undefined)
+      );
     }
     if (content.type === "section") {
       const nestedVars = content.content.filter((c) => c.type === "variable");
@@ -191,21 +195,33 @@ export const genType = (parsed: Mustache[]): string => {
         if (variable.scope === "global") {
           /* If this is explicitly set as global, all we need to do
           is set it on the object and we can return. */
-          obj = mergeObj(obj, nestedObj([...variable.name]));
+          obj = mergeObj(
+            obj,
+            nestedObj([...variable.name], variable.varType || undefined)
+          );
           return;
         } else if (variable.scope === "local") {
-          obj = mergeObj(obj, nestedObj([...content.name, ...variable.name]));
+          obj = mergeObj(
+            obj,
+            nestedObj(
+              [...content.name, ...variable.name],
+              variable.varType || undefined
+            )
+          );
           return;
         }
 
         // scope is unclear, so we need to handle both cases and make them
         // optional.
         const names = [...content.name, ...variable.name];
-        obj = mergeObj(obj, nestedObj(names));
-        deepSet(obj, [...content.name, ...variable.name], OPTIONAL);
+        obj = mergeObj(obj, nestedObj(names, variable.varType || undefined));
+        deepSet(obj, names, OPTIONAL);
 
         // handle top level vars
-        obj = mergeObj(obj, nestedObj([...variable.name]));
+        obj = mergeObj(
+          obj,
+          nestedObj([...variable.name], variable.varType || undefined)
+        );
         // make top level vars optional
         deepSet(obj, [...variable.name], OPTIONAL);
       });

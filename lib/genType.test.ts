@@ -228,4 +228,90 @@ describe("genType", () => {
   name: string | boolean | number;
 }`);
   });
+
+  it("If a variable has a type hint, use that type", () => {
+    const parsed: Mustache[] = [
+      {
+        type: "variable",
+        triple: false,
+        name: ["name"],
+        varType: ["string"],
+      },
+    ];
+    const result = genType(parsed);
+    expect(result).toBe(`{
+  name: string;
+}`);
+  });
+
+  it("If a variable has a type hint, use that type (global scope)", () => {
+    const parsed: Mustache[] = [
+      {
+        type: "section",
+        name: ["user"],
+        content: [
+          {
+            type: "variable",
+            triple: false,
+            name: ["name"],
+            scope: "global",
+            varType: ["string"],
+          },
+        ],
+      },
+    ];
+    const result = genType(parsed);
+    expect(result).toBe(`{
+  user: boolean;
+  name: string;
+}`);
+  });
+
+  it("If a variable has a type hint, use that type (local scope)", () => {
+    const parsed: Mustache[] = [
+      {
+        type: "section",
+        name: ["user"],
+        content: [
+          {
+            type: "variable",
+            triple: false,
+            name: ["name"],
+            scope: "local",
+            varType: ["string"],
+          },
+        ],
+      },
+    ];
+    const result = genType(parsed);
+    expect(result).toBe(`{
+  user: {
+    name: string;
+  };
+}`);
+  });
+
+  it("If a variable has a type hint, but scope is unclear, use that type (larger example)", () => {
+    const parsed: Mustache[] = [
+      {
+        type: "section",
+        name: ["user"],
+        content: [
+          {
+            type: "variable",
+            triple: false,
+            name: ["name"],
+            varType: ["string"],
+          },
+        ],
+      },
+    ];
+    const result = genType(parsed);
+    expect(result).toBe(`{
+  user: {
+    name?: string;
+  } | boolean;
+  name?: string;
+}`);
+  });
 });
