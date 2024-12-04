@@ -1,9 +1,5 @@
 # Tarstache
 
-### I mustache you a question. Why do mustache parsers have such big dependency trees?
-
-Tarstache just has one dependency, [tarsec](https://github.com/egonSchiele/tarsec).
-
 Example:
 
 A typical Mustache template:
@@ -44,4 +40,12 @@ npm run build && npm run start
 
 ### Support
 
-Supports all basic mustache constructs. No support yet for partials or for nesting sections within sections. You can however nest a variable within a section just fine.
+tarstache has been tested against the mustache spec. This is a work in progress. The following mustache features are currently not available:
+
+1. Nested sections
+2. Lambdas
+3. Dynamic names
+4. blocks
+5. partials
+6. parents
+7. custom delimiter tags.

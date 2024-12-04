@@ -1,5 +1,5 @@
-import { mustacheParser } from "./mustacheParser";
-import { Mustache, TemplateParams } from "./types";
+import { mustacheParser } from "./mustacheParser.js";
+import { Mustache, TemplateParams } from "./types.js";
 
 export const applyParsed = (
   contents: Mustache[],
@@ -48,6 +48,58 @@ export const applyParsed = (
     .join("");
 };
 
+/*
+When we reference a variable, there are cases we need to handle.
+
+The simplest one is when the variable name is a key in the object:
+
+```ts
+{
+  user: "Adit"
+}
+
+{{user}}
+```
+
+However, Mustache also allows you to access variables that are nested within objects:
+
+```ts
+{
+  user: {
+    name: "Adit"
+  }
+}
+
+{{user.name}}
+
+```
+
+When you use a section, that creates a context, and we need to look up the variable name within that context:
+
+```ts
+{
+  user: {
+    name: "Adit"
+  }
+}
+
+{{#user}}{{name}}{{/user}}
+
+``
+
+Finally, even in the context, you can reference a top level variable:
+
+```ts
+{
+  user: {
+    name: "Adit"
+  },
+  greeting: "Hello"
+}
+
+{{#user}}{{greeting}}{{/user}}
+```
+*/
 const deepSeek = (obj: TemplateParams, name: string[]): any => {
   if (
     typeof obj === "string" ||
@@ -91,6 +143,8 @@ const renderVariable = (variable: any, escape: boolean): string => {
   let str = variable;
   if (typeof variable === "number") {
     str = variable.toString();
+  } else if (typeof variable === "boolean") {
+    str = variable ? "true" : "false";
   }
 
   if (escape) {
