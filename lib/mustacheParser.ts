@@ -15,6 +15,7 @@ import {
   optional,
   sepBy,
   failure,
+  newline,
 } from "tarsec";
 
 import {
@@ -119,10 +120,12 @@ const contentParser: Parser<Mustache[]> = many1(
 const sectionTag: Parser<SectionTag> = seqC(
   set("type", "section"),
   capture(between(str("{{#"), str("}}"), tagName), "name"),
+  newline,
   capture(contentParser, "content"),
   str("{{/"),
   tagName,
-  str("}}")
+  str("}}"),
+  optional(newline)
 );
 
 const invertedTag: Parser<InvertedTag> = seqC(
@@ -164,7 +167,15 @@ export const applyParsed = (
       }
       if (content.type === "section") {
         const value = deepSeek(obj, content.name);
-        return value ? applyParsed(content.content, obj, content.name) : "";
+        if (value === undefined || value === null) {
+          return "";
+        } else if (Array.isArray(value)) {
+          return value
+            .map((item) => applyParsed(content.content, item))
+            .join("");
+        } else {
+          return applyParsed(content.content, value);
+        }
       }
       if (content.type === "inverted") {
         const value = deepSeek(obj, content.name);
