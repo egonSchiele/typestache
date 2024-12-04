@@ -1,5 +1,6 @@
 import fs from "fs";
-import { apply, genType, mustacheParser } from "./lib/mustacheParser.js";
+import { mustacheParser } from "./lib/mustacheParser.js";
+import { apply } from "./lib/apply.js";
 
 const contents = fs.readFileSync("../sample.md", "utf8");
 const result = mustacheParser(contents);
