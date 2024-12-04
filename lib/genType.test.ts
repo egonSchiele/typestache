@@ -1,22 +1,22 @@
 import { describe, expect, it } from "vitest";
 import { nestedObj, mergeObj, renderObj, genType } from "./genType.js";
 import { Mustache } from "./types.js";
-
+const DEFAULT_TYPE = "__DEFAULT_TYPE__";
 describe("nestedObj", () => {
   it("should return an object with a single key", () => {
     const result = nestedObj(["name"]);
-    expect(result).toEqual({ name: ["string", "boolean", "number"] });
+    expect(result).toEqual({ name: [DEFAULT_TYPE] });
   });
 
   it("should return an object with a single key and a nested object", () => {
     const result = nestedObj(["user", "name"]);
-    expect(result).toEqual({ user: { name: ["string", "boolean", "number"] } });
+    expect(result).toEqual({ user: { name: [DEFAULT_TYPE] } });
   });
 
   it("should return an object with a single key and a nested array", () => {
     const result = nestedObj(["user", "emails", "address"]);
     expect(result).toEqual({
-      user: { emails: { address: ["string", "boolean", "number"] } },
+      user: { emails: { address: [DEFAULT_TYPE] } },
     });
   });
 });
@@ -350,9 +350,6 @@ describe("genType", () => {
         varType: ["boolean"],
       },
     ];
-    const result = genType(parsed);
-    expect(result).toBe(`{
-  name: string;
-}`);
+    expect(() => genType(parsed)).toThrowError();
   });
 });
