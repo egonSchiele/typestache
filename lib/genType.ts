@@ -1,7 +1,7 @@
 import { Mustache } from "./types";
 
 const uniq = <T>(arr: T[]): T[] => Array.from(new Set(arr));
-
+const OPTIONAL = "__OPTIONAL__";
 type Obj = Record<string, string[] | Record<string, any>>;
 
 /* 
@@ -14,17 +14,20 @@ this will return an object like
 { user: { emails: { address: ["string"] } } }
 
 */
-export const nestedObj = (keys: string[]): Obj => {
+export const nestedObj = (
+  keys: string[],
+  typeToSet: string[] = ["string", "boolean", "number"]
+): Obj => {
   const obj: Obj = {};
   if (keys.length === 0) {
     return obj;
   }
   const key = keys[0];
   if (!obj[key]) {
-    obj[key] = keys.length === 1 ? ["string"] : nestedObj(keys.slice(1));
+    obj[key] = keys.length === 1 ? [...typeToSet] : nestedObj(keys.slice(1));
   } else if (Array.isArray(obj[key])) {
     if (keys.length === 1) {
-      obj[key] = uniq([...obj[key], "string"]);
+      obj[key] = uniq([...obj[key], ...typeToSet]);
     } else {
       obj[key] = [...obj[key], nestedObj(keys.slice(1))];
     }
@@ -66,13 +69,25 @@ export const mergeObj = (obj1: Obj, obj2: Obj): Obj => {
 // render a single object to a TypeScript type
 export const renderObj = (obj: Obj, level: number = 1): string => {
   const inner = Object.entries(obj)
-    .map(([key, value]) => {
-      if (Array.isArray(value)) {
-        return `${"  ".repeat(level)}${key}: ${renderValue(value, level)};`;
+    .map(([_key, value]) => {
+      let key = _key;
+      let optStr = "";
+      if (key.startsWith(OPTIONAL)) {
+        key = key.replace(OPTIONAL, "");
+        optStr = "?";
       }
-      return `${"  ".repeat(level)}${key}: ${renderObj(value, level + 1)}`;
+      if (Array.isArray(value)) {
+        return `${"  ".repeat(level)}${key}${optStr}: ${renderValue(
+          value,
+          level
+        )};`;
+      }
+      return `${"  ".repeat(level)}${key}${optStr}: ${renderObj(
+        value,
+        level + 1
+      )};`;
     })
-    .join(",\n");
+    .join("\n");
   return `{\n${inner}\n${"  ".repeat(level - 1)}}`;
 };
 
@@ -85,6 +100,35 @@ const renderValue = (value: any, level: number): string => {
     return value;
   }
   return `can't render ${value}`;
+};
+
+const deepSet = (obj: Obj, keys: string[], value: any): void => {
+  let current = obj;
+  keys.forEach((key, i) => {
+    if (i === keys.length - 1) {
+      if (value === OPTIONAL) {
+        current[`${OPTIONAL}${key}`] = current[key];
+        delete current[key];
+      } else if (Array.isArray(current[key])) {
+        current[key] = uniq([...current[key], value]);
+      } else if (typeof current[key] === "object") {
+        current[key] = [current[key], value];
+      } else {
+        current[key] = value;
+      }
+    } else {
+      if (!current[key]) {
+        current[key] = {};
+      }
+      if (Array.isArray(current[key])) {
+        current[key].forEach((v: any) => {
+          deepSet(v, keys.slice(i + 1), value);
+        });
+      } else if (typeof current[key] === "object") {
+        current = current[key];
+      }
+    }
+  });
 };
 
 // generate a TypeScript type from a parsed Mustache template
@@ -103,10 +147,19 @@ export const genType = (parsed: Mustache[]): string => {
         .filter((c) => c.type === "variable")
         .map((c) => c.name);
       if (nestedVars.length === 0) {
-        obj = mergeObj(obj, nestedObj(content.name));
+        obj = mergeObj(obj, nestedObj(content.name, ["boolean"]));
       }
       nestedVars.forEach((vars) => {
         obj = mergeObj(obj, nestedObj([...content.name, ...vars]));
+        // object or boolean
+        deepSet(obj, [...content.name], ["boolean"]);
+        // make nested var optional
+        deepSet(obj, [...content.name, ...vars], OPTIONAL);
+
+        // handle top level vars
+        obj = mergeObj(obj, nestedObj([...vars]));
+        // make top level vars optional
+        deepSet(obj, [...vars], OPTIONAL);
       });
     }
     if (content.type === "inverted") {

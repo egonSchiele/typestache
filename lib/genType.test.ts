@@ -5,17 +5,19 @@ import { Mustache } from "./types.js";
 describe("nestedObj", () => {
   it("should return an object with a single key", () => {
     const result = nestedObj(["name"]);
-    expect(result).toEqual({ name: ["string"] });
+    expect(result).toEqual({ name: ["string", "boolean", "number"] });
   });
 
   it("should return an object with a single key and a nested object", () => {
     const result = nestedObj(["user", "name"]);
-    expect(result).toEqual({ user: { name: ["string"] } });
+    expect(result).toEqual({ user: { name: ["string", "boolean", "number"] } });
   });
 
   it("should return an object with a single key and a nested array", () => {
     const result = nestedObj(["user", "emails", "address"]);
-    expect(result).toEqual({ user: { emails: { address: ["string"] } } });
+    expect(result).toEqual({
+      user: { emails: { address: ["string", "boolean", "number"] } },
+    });
   });
 });
 
@@ -59,7 +61,7 @@ describe("renderObj", () => {
     expect(result).toBe(`{
   user: {
     name: string;
-  }
+  };
 }`);
   });
 
@@ -70,8 +72,8 @@ describe("renderObj", () => {
   user: {
     emails: {
       address: string | number;
-    }
-  }
+    };
+  };
 }`);
   });
 
@@ -86,8 +88,8 @@ describe("renderObj", () => {
       address: string | {
         zip: number;
       };
-    }
-  }
+    };
+  };
 }`);
   });
 });
@@ -99,7 +101,7 @@ describe("genType", () => {
     ];
     const result = genType(parsed);
     expect(result).toBe(`{
-  name: string;
+  name: string | boolean | number;
 }`);
   });
 
@@ -110,12 +112,26 @@ describe("genType", () => {
     const result = genType(parsed);
     expect(result).toBe(`{
   user: {
-    name: string;
-  }
+    name: string | boolean | number;
+  };
 }`);
   });
 
   it("should generate a type for a section", () => {
+    const parsed: Mustache[] = [
+      {
+        type: "section",
+        name: ["user"],
+        content: [],
+      },
+    ];
+    const result = genType(parsed);
+    expect(result).toBe(`{
+  user: boolean;
+}`);
+  });
+
+  it("should generate a type for a section with nested vars", () => {
     const parsed: Mustache[] = [
       {
         type: "section",
@@ -126,8 +142,9 @@ describe("genType", () => {
     const result = genType(parsed);
     expect(result).toBe(`{
   user: {
-    name: string;
-  }
+    name?: string | boolean | number;
+  } | boolean;
+  name?: string | boolean | number;
 }`);
   });
 });
