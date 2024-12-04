@@ -1,5 +1,6 @@
 export type MustacheTag =
   | VariableTag
+  | ImplicitVariableTag
   | SectionTag
   | InvertedTag
   | CommentTag
@@ -8,6 +9,11 @@ export type MustacheTag =
 export type VariableTag = {
   type: "variable";
   name: string[];
+  triple: boolean;
+};
+
+export type ImplicitVariableTag = {
+  type: "implicit-variable";
   triple: boolean;
 };
 

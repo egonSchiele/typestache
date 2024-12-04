@@ -1,0 +1,13 @@
+{
+    "foo": [
+        {
+            "name": "Implicit Iterators - Basic Interpolation",
+            "desc": "Unadorned tags should interpolate content into the template.",
+            "data": "world",
+            "template": "Hello, {{.}}!\n",
+            "expected": "Hello, world!\n"
+          }
+        ]
+    }
+
+        

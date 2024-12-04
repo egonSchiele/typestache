@@ -19,6 +19,7 @@ import {
 
 import {
   CommentTag,
+  ImplicitVariableTag,
   InvertedTag,
   Mustache,
   PartialTag,
@@ -68,6 +69,31 @@ const variableTag: Parser<VariableTag> = or(
   doubleVariableTag
 );
 
+const doubleImplicitVariableTag: Parser<ImplicitVariableTag> = seqC(
+  set("type", "implicit-variable"),
+  str("{{"),
+  optional(spaces),
+  char("."),
+  optional(spaces),
+  str("}}"),
+  set("triple", false)
+);
+
+const tripleImplicitVariableTag: Parser<ImplicitVariableTag> = seqC(
+  set("type", "implicit-variable"),
+  str("{{{"),
+  optional(spaces),
+  char("."),
+  optional(spaces),
+  str("}}}"),
+  set("triple", true)
+);
+
+const implicitVariableTag: Parser<ImplicitVariableTag> = or(
+  tripleImplicitVariableTag,
+  doubleImplicitVariableTag
+);
+
 const textParser: Parser<SimpleText> = seqC(
   set("type", "text"),
   capture(many1Till(str("{{")), "content")
@@ -108,7 +134,15 @@ const invertedTag: Parser<InvertedTag> = seqC(
 );
 
 export const mustacheParser: Parser<Mustache[]> = many1(
-  or(variableTag, sectionTag, invertedTag, commentTag, partialTag, textParser)
+  or(
+    variableTag,
+    sectionTag,
+    invertedTag,
+    commentTag,
+    partialTag,
+    implicitVariableTag,
+    textParser
+  )
 );
 
 export const applyParsed = (
@@ -141,6 +175,14 @@ export const applyParsed = (
       if (content.type === "partial") {
         return `{{>${content.name}}}`;
       }
+      if (content.type === "implicit-variable") {
+        const variable = resolveDottedVariable(obj, currentContext);
+        const str = variable ? variable.toString() : "";
+        if (content.triple) {
+          return str;
+        }
+        return escapeHTML(str);
+      }
       return "";
     })
     .join("");
@@ -168,6 +210,14 @@ const escapedCharacters: { [key: string]: string } = {
   "'": "&apos;",
 };
 
+const escapeHTML = (_str: string): string => {
+  let str = _str;
+  for (const [key, value] of Object.entries(escapedCharacters)) {
+    str = str.replaceAll(key, value);
+  }
+  return str;
+};
+
 const applyVariable = (content: VariableTag, variable: any): string => {
   if (variable === undefined || variable === null) {
     return "";
@@ -179,9 +229,7 @@ const applyVariable = (content: VariableTag, variable: any): string => {
   }
 
   if (!content.triple) {
-    for (const [key, value] of Object.entries(escapedCharacters)) {
-      str = str.replaceAll(key, value);
-    }
+    return escapeHTML(str);
   }
   return str;
 };
