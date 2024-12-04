@@ -352,4 +352,61 @@ describe("genType", () => {
     ];
     expect(() => genType(parsed)).toThrowError();
   });
+
+  it("type hint + scope is unclear + same name var untyped", () => {
+    const parsed: Mustache[] = [
+      {
+        type: "variable",
+        triple: false,
+        name: ["name"],
+        varType: ["string"],
+      },
+      {
+        type: "section",
+        name: ["user"],
+        content: [
+          {
+            type: "variable",
+            triple: false,
+            name: ["name"],
+          },
+        ],
+      },
+    ];
+    const result = genType(parsed);
+    expect(result).toBe(`{
+  user: {
+    name?: string | boolean | number;
+  } | boolean;
+  name: string;
+}`);
+  });
+
+  it("type hint + scope is global + same name var untyped", () => {
+    const parsed: Mustache[] = [
+      {
+        type: "variable",
+        triple: false,
+        name: ["name"],
+        varType: ["string"],
+      },
+      {
+        type: "section",
+        name: ["user"],
+        content: [
+          {
+            type: "variable",
+            triple: false,
+            name: ["name"],
+            scope: "global",
+          },
+        ],
+      },
+    ];
+    const result = genType(parsed);
+    expect(result).toBe(`{
+  name: string;
+  user: boolean;
+}`);
+  });
 });
