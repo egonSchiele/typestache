@@ -72,7 +72,7 @@ export const mergeObj = (obj1: Obj, obj2: Obj): Obj => {
   if (Array.isArray(obj1) || Array.isArray(obj2)) {
     const newArr = uniq([obj1, obj2].flat()).filter((v) => v !== DEFAULT_TYPE);
     if (newArr.length === 1) {
-      return newArr[0];
+      return newArr;
     }
     if (newArr.length === 0) {
       return [DEFAULT_TYPE];
@@ -98,7 +98,11 @@ export const mergeObj = (obj1: Obj, obj2: Obj): Obj => {
     } else if (obj2[key] === undefined) {
       newObj[key] = obj1[key];
     } else {
-      throw new Error(`can't merge ${obj1[key]} and ${obj2[key]}`);
+      throw new Error(
+        `can't merge ${JSON.stringify(obj1[key])} and ${JSON.stringify(
+          obj2[key]
+        )}`
+      );
     }
   });
   return newObj;

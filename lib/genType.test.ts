@@ -321,6 +321,35 @@ describe("genType", () => {
 }`);
   });
 
+  it("A variable's type hint can be set more than once if its the same", () => {
+    const parsed: Mustache[] = [
+      {
+        type: "variable",
+        triple: false,
+        name: ["name"],
+        scope: "global",
+      },
+      {
+        type: "variable",
+        triple: false,
+        name: ["name"],
+        varType: ["string"],
+        scope: "global",
+      },
+      {
+        type: "variable",
+        triple: false,
+        name: ["name"],
+        varType: ["string"],
+        scope: "global",
+      },
+    ];
+    const result = genType(parsed);
+    expect(result).toBe(`{
+  name: string;
+}`);
+  });
+
   it("Conflicting type hints should raise an error", () => {
     const parsed: Mustache[] = [
       {
