@@ -1,4 +1,4 @@
-# Tarstache
+# Typestache
 
 Example:
 
@@ -40,7 +40,7 @@ npm run build && npm run start
 
 ### Support
 
-tarstache has been tested against the mustache spec. This is a work in progress. The following mustache features are currently not available:
+typestache has been tested against the mustache spec. This is a work in progress. The following mustache features are currently not available:
 
 1. Nested sections
 2. Lambdas
