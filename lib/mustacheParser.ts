@@ -78,6 +78,7 @@ const captureWithScope = (captures: VariableTag): VariableTag => {
 
 const doubleVariableTag: Parser<VariableTag> = seqC(
   set("type", "variable"),
+  set("scope", "global"),
   str("{{"),
   optional(spaces),
   capture(tagName, "name"),
@@ -89,6 +90,7 @@ const doubleVariableTag: Parser<VariableTag> = seqC(
 
 const tripleVariableTag: Parser<VariableTag> = seqC(
   set("type", "variable"),
+  set("scope", "global"),
   str("{{{"),
   optional(spaces),
   capture(tagName, "name"),
@@ -100,6 +102,7 @@ const tripleVariableTag: Parser<VariableTag> = seqC(
 
 const ampersandVariableTag: Parser<VariableTag> = seqC(
   set("type", "variable"),
+  set("scope", "global"),
   str("{{"),
   optional(spaces),
   char("&"),
