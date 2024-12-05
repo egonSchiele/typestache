@@ -21,20 +21,23 @@ this will return an object like
 */
 export const nestedObj = (
   keys: string[],
+  optional: boolean = false,
   typeToSet: string[] = [DEFAULT_TYPE]
 ): Obj => {
   const obj: Obj = {};
   if (keys.length === 0) {
     return obj;
   }
-  const key = keys[0];
+  const key = keys.length === 1 && optional ? `${OPTIONAL}${keys[0]}` : keys[0];
   if (notAKey(key)) {
     throw new Error(`key is not a string: ${key}`);
   }
 
   if (!obj[key]) {
     obj[key] =
-      keys.length === 1 ? [...typeToSet] : nestedObj(keys.slice(1), typeToSet);
+      keys.length === 1
+        ? [...typeToSet]
+        : nestedObj(keys.slice(1), optional, typeToSet);
   } else if (Array.isArray(obj[key])) {
     if (keys.length === 1) {
       if (typeToSet[0] === DEFAULT_TYPE && typeToSet.length === 1) {
@@ -47,10 +50,13 @@ export const nestedObj = (
       }
       //obj[key] = uniq([...obj[key], ...typeToSet]);
     } else {
-      obj[key] = uniq([...obj[key], nestedObj(keys.slice(1), typeToSet)]);
+      obj[key] = uniq([
+        ...obj[key],
+        nestedObj(keys.slice(1), optional, typeToSet),
+      ]);
     }
   } else if (typeof obj[key] === "object") {
-    obj[key] = nestedObj(keys.slice(1), typeToSet);
+    obj[key] = nestedObj(keys.slice(1), optional, typeToSet);
   }
   return obj;
 };
@@ -202,7 +208,11 @@ export const genType = (parsed: Mustache[]): string => {
     if (content.type === "variable") {
       obj = mergeObj(
         obj,
-        nestedObj(content.name, content.varType || undefined)
+        nestedObj(
+          content.name,
+          content.varType?.optional || false,
+          content.varType?.name || undefined
+        )
       );
     }
     if (content.type === "section") {
@@ -210,7 +220,7 @@ export const genType = (parsed: Mustache[]): string => {
       const allGlobals = nestedVars.every((v) => v.scope === "global");
       const allLocals = nestedVars.every((v) => v.scope === "local");
       if (nestedVars.length === 0 || allGlobals) {
-        obj = mergeObj(obj, nestedObj(content.name, ["boolean"]));
+        obj = mergeObj(obj, nestedObj(content.name, false, ["boolean"]));
       }
 
       nestedVars.forEach((variable: VariableTag) => {
@@ -219,7 +229,11 @@ export const genType = (parsed: Mustache[]): string => {
           is set it on the object and we can return. */
           obj = mergeObj(
             obj,
-            nestedObj([...variable.name], variable.varType || undefined)
+            nestedObj(
+              [...variable.name],
+              variable.varType?.optional || false,
+              variable.varType?.name || undefined
+            )
           );
           return;
         } else if (variable.scope === "local") {
@@ -227,7 +241,8 @@ export const genType = (parsed: Mustache[]): string => {
             obj,
             nestedObj(
               [...content.name, ...variable.name],
-              variable.varType || undefined
+              variable.varType?.optional || false,
+              variable.varType?.name || undefined
             )
           );
           return;

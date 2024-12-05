@@ -6,12 +6,17 @@ export type MustacheTag =
   | CommentTag
   | PartialTag;
 
+export type VarType = {
+  name: string[];
+  optional: boolean;
+};
+
 export type VariableTag = {
   type: "variable";
   name: string[];
   triple: boolean;
   scope: "local" | "global";
-  varType?: string[];
+  varType?: VarType;
 };
 
 export type ImplicitVariableTag = {

@@ -219,7 +219,10 @@ describe("genType", () => {
         type: "variable",
         triple: false,
         name: ["name"],
-        varType: ["string"],
+        varType: {
+          name: ["string"],
+          optional: false,
+        },
         scope: "global",
       },
     ];
@@ -240,7 +243,10 @@ describe("genType", () => {
             triple: false,
             name: ["name"],
             scope: "global",
-            varType: ["string"],
+            varType: {
+              name: ["string"],
+              optional: false,
+            },
           },
         ],
       },
@@ -263,7 +269,10 @@ describe("genType", () => {
             triple: false,
             name: ["name"],
             scope: "local",
-            varType: ["string"],
+            varType: {
+              name: ["string"],
+              optional: false,
+            },
           },
         ],
       },
@@ -286,7 +295,10 @@ describe("genType", () => {
             type: "variable",
             triple: false,
             name: ["name"],
-            varType: ["string"],
+            varType: {
+              name: ["string"],
+              optional: false,
+            },
             scope: "global",
           },
         ],
@@ -305,7 +317,10 @@ describe("genType", () => {
         type: "variable",
         triple: false,
         name: ["name"],
-        varType: ["string"],
+        varType: {
+          name: ["string"],
+          optional: false,
+        },
         scope: "global",
       },
       {
@@ -333,14 +348,20 @@ describe("genType", () => {
         type: "variable",
         triple: false,
         name: ["name"],
-        varType: ["string"],
+        varType: {
+          name: ["string"],
+          optional: false,
+        },
         scope: "global",
       },
       {
         type: "variable",
         triple: false,
         name: ["name"],
-        varType: ["string"],
+        varType: {
+          name: ["string"],
+          optional: false,
+        },
         scope: "global",
       },
     ];
@@ -356,14 +377,20 @@ describe("genType", () => {
         type: "variable",
         triple: false,
         name: ["name"],
-        varType: ["string"],
+        varType: {
+          name: ["string"],
+          optional: false,
+        },
         scope: "global",
       },
       {
         type: "variable",
         triple: false,
         name: ["name"],
-        varType: ["boolean"],
+        varType: {
+          name: ["boolean"],
+          optional: false,
+        },
         scope: "global",
       },
     ];
@@ -377,7 +404,10 @@ describe("genType", () => {
         scope: "global",
         triple: false,
         name: ["name"],
-        varType: ["string"],
+        varType: {
+          name: ["string"],
+          optional: false,
+        },
       },
       {
         type: "section",
@@ -406,7 +436,10 @@ describe("genType", () => {
         scope: "global",
         triple: false,
         name: ["name"],
-        varType: ["string"],
+        varType: {
+          name: ["string"],
+          optional: false,
+        },
       },
       {
         type: "section",
@@ -417,7 +450,10 @@ describe("genType", () => {
             scope: "local",
             triple: false,
             name: ["name"],
-            varType: ["number"],
+            varType: {
+              name: ["number"],
+              optional: false,
+            },
           },
         ],
       },
@@ -441,14 +477,20 @@ describe("genType", () => {
             type: "variable",
             triple: false,
             name: ["name"],
-            varType: ["string"],
+            varType: {
+              name: ["string"],
+              optional: false,
+            },
             scope: "local",
           },
           {
             type: "variable",
             triple: false,
             name: ["name"],
-            varType: ["number"],
+            varType: {
+              name: ["number"],
+              optional: false,
+            },
             scope: "global",
           },
         ],

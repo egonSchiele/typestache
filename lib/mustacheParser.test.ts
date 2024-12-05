@@ -22,7 +22,14 @@ describe("Variable tags", () => {
 
     expect(result.result).toMatchObject([
       { type: "text", content: "Hello " },
-      { type: "variable", name: ["name"], varType: ["string"] },
+      {
+        type: "variable",
+        name: ["name"],
+        varType: {
+          name: ["string"],
+          optional: false,
+        },
+      },
       { type: "text", content: "!" },
     ]);
   });
@@ -35,7 +42,14 @@ describe("Variable tags", () => {
 
     expect(result.result).toMatchObject([
       { type: "text", content: "Hello " },
-      { type: "variable", name: ["name"], varType: ["string", "number"] },
+      {
+        type: "variable",
+        name: ["name"],
+        varType: {
+          name: ["string", "number"],
+          optional: false,
+        },
+      },
       { type: "text", content: "!" },
     ]);
   });
@@ -48,7 +62,14 @@ describe("Variable tags", () => {
 
     expect(result.result).toMatchObject([
       { type: "text", content: "Hello " },
-      { type: "variable", name: ["name"], varType: ["string", "number"] },
+      {
+        type: "variable",
+        name: ["name"],
+        varType: {
+          name: ["string", "number"],
+          optional: false,
+        },
+      },
       { type: "text", content: "!" },
     ]);
   });

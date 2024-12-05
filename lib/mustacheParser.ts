@@ -27,6 +27,7 @@ import {
   SectionTag,
   SimpleText,
   VariableTag,
+  VarType,
 } from "./types.js";
 
 const _tagName: Parser<string[]> = sepBy(
@@ -43,17 +44,23 @@ const tagName: Parser<string[]> = (input: string) => {
   }
 };
 
-const varType: Parser<string[]> = seq(
+const varType: Parser<VarType> = seq(
   [
     optional(spaces),
     str(":"),
     optional(spaces),
     capture(
       sepBy(or(str(" | "), char("|")), regexParser("([a-zA-Z0-9_]+)")),
-      "varType"
+      "name"
     ),
+    optional(capture(str("?"), "optional")),
   ],
-  (r: any, c: any) => c.varType
+  (r: any, c: any) => {
+    return {
+      name: c.name,
+      optional: !!c.optional,
+    };
+  }
 );
 
 const captureWithScope = (captures: VariableTag): VariableTag => {

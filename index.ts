@@ -1,26 +1,5 @@
-import { Mustache, genType } from "./lib/index.js";
+import { Mustache, genType, mustacheParser } from "./lib/index.js";
 
-const parsed: Mustache[] = [
-  {
-    type: "variable",
-    triple: false,
-    name: ["name"],
-    scope: "global",
-  },
-  {
-    type: "variable",
-    triple: false,
-    name: ["name"],
-    varType: ["string"],
-    scope: "global",
-  },
-  {
-    type: "variable",
-    triple: false,
-    name: ["name"],
-    varType: ["string"],
-    scope: "global",
-  },
-];
-const result = genType(parsed);
-console.log(result);
+const template = "Hello {{name:string?}}!";
+const parsed = mustacheParser(template);
+console.log(JSON.stringify(parsed, null, 2));
