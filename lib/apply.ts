@@ -38,10 +38,6 @@ export const _applyParsed = (
             .join("");
         } else {
           const str = _applyParsed(content.content, value, globalObj);
-          if (str === "") {
-            // try to find the variable in the parent context
-            return _applyParsed(content.content, obj, globalObj);
-          }
           return str;
         }
       }

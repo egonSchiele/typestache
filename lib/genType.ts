@@ -221,20 +221,6 @@ export const genType = (parsed: Mustache[]): string => {
           );
           return;
         }
-
-        // scope is unclear, so we need to handle both cases and make them
-        // optional.
-        const names = [...content.name, ...variable.name];
-        obj = mergeObj(obj, nestedObj(names, variable.varType || undefined));
-        deepSet(obj, names, OPTIONAL);
-
-        // handle top level vars
-        obj = mergeObj(
-          obj,
-          nestedObj([...variable.name], variable.varType || undefined)
-        );
-        // make top level vars optional
-        deepSet(obj, [...variable.name], OPTIONAL);
       });
 
       /* If every nested variable is local, that means this can't be a boolean,

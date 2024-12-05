@@ -97,7 +97,7 @@ describe("renderObj", () => {
 describe("genType", () => {
   it("should generate a type for a single variable", () => {
     const parsed: Mustache[] = [
-      { type: "variable", triple: false, name: ["name"] },
+      { type: "variable", triple: false, name: ["name"], scope: "global" },
     ];
     const result = genType(parsed);
     expect(result).toBe(`{
@@ -107,7 +107,12 @@ describe("genType", () => {
 
   it("should generate a type for a single variable with a nested object", () => {
     const parsed: Mustache[] = [
-      { type: "variable", triple: false, name: ["user", "name"] },
+      {
+        type: "variable",
+        triple: false,
+        name: ["user", "name"],
+        scope: "global",
+      },
     ];
     const result = genType(parsed);
     expect(result).toBe(`{
@@ -136,36 +141,14 @@ describe("genType", () => {
       {
         type: "section",
         name: ["user"],
-        content: [{ type: "variable", triple: false, name: ["name"] }],
+        content: [
+          { type: "variable", scope: "global", triple: false, name: ["name"] },
+        ],
       },
     ];
     const result = genType(parsed);
     expect(result).toBe(`{
-  user: {
-    name?: string | boolean | number;
-  } | boolean;
-  name?: string | boolean | number;
-}`);
-  });
-
-  it("If a variable is optional in one context but required in another, render it as required", () => {
-    const parsed: Mustache[] = [
-      {
-        type: "section",
-        name: ["user"],
-        content: [{ type: "variable", triple: false, name: ["name"] }],
-      },
-      {
-        type: "variable",
-        name: ["name"],
-        triple: false,
-      },
-    ];
-    const result = genType(parsed);
-    expect(result).toBe(`{
-  user: {
-    name?: string | boolean | number;
-  } | boolean;
+  user: boolean;
   name: string | boolean | number;
 }`);
   });
@@ -201,6 +184,7 @@ describe("genType", () => {
         type: "variable",
         name: ["name"],
         triple: false,
+        scope: "global",
       },
     ];
     const result = genType(parsed);
@@ -236,6 +220,7 @@ describe("genType", () => {
         triple: false,
         name: ["name"],
         varType: ["string"],
+        scope: "global",
       },
     ];
     const result = genType(parsed);
@@ -302,16 +287,15 @@ describe("genType", () => {
             triple: false,
             name: ["name"],
             varType: ["string"],
+            scope: "global",
           },
         ],
       },
     ];
     const result = genType(parsed);
     expect(result).toBe(`{
-  user: {
-    name?: string;
-  } | boolean;
-  name?: string;
+  user: boolean;
+  name: string;
 }`);
   });
 
@@ -322,11 +306,13 @@ describe("genType", () => {
         triple: false,
         name: ["name"],
         varType: ["string"],
+        scope: "global",
       },
       {
         type: "variable",
         triple: false,
         name: ["name"],
+        scope: "global",
       },
     ];
     const result = genType(parsed);
@@ -342,12 +328,14 @@ describe("genType", () => {
         triple: false,
         name: ["name"],
         varType: ["string"],
+        scope: "global",
       },
       {
         type: "variable",
         triple: false,
         name: ["name"],
         varType: ["boolean"],
+        scope: "global",
       },
     ];
     expect(() => genType(parsed)).toThrowError();
