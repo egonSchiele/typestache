@@ -70,7 +70,10 @@ const captureWithScope = (captures: VariableTag): VariableTag => {
       name: captures.name.slice(1),
     };
   }
-  return captures;
+  return {
+    ...captures,
+    scope: "global",
+  };
 };
 
 const doubleVariableTag: Parser<VariableTag> = seqC(

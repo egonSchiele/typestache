@@ -169,7 +169,8 @@
           "name": "Joe"
         }
       },
-      "template": "\"{{person.name}}\" == \"{{#person}}{{name}}{{/person}}\"",
+      "template": "\"{{person.name}}\" == \"{{#person}}{{this.name}}{{/person}}\"",
+      "spec-template": "\"{{person.name}}\" == \"{{#person}}{{name}}{{/person}}\"",
       "expected": "\"Joe\" == \"Joe\""
     },
     {
@@ -180,7 +181,8 @@
           "name": "Joe"
         }
       },
-      "template": "\"{{{person.name}}}\" == \"{{#person}}{{{name}}}{{/person}}\"",
+      "template": "\"{{{person.name}}}\" == \"{{#person}}{{{this.name}}}{{/person}}\"",
+      "spec-template": "\"{{{person.name}}}\" == \"{{#person}}{{{name}}}{{/person}}\"",
       "expected": "\"Joe\" == \"Joe\""
     },
     {
@@ -191,7 +193,8 @@
           "name": "Joe"
         }
       },
-      "template": "\"{{&person.name}}\" == \"{{#person}}{{&name}}{{/person}}\"",
+      "template": "\"{{&person.name}}\" == \"{{#person}}{{&this.name}}{{/person}}\"",
+      "spec-template": "\"{{&person.name}}\" == \"{{#person}}{{&name}}{{/person}}\"",
       "expected": "\"Joe\" == \"Joe\""
     },
     {
@@ -263,7 +266,8 @@
           }
         }
       },
-      "template": "\"{{#a}}{{b.c.d.e.name}}{{/a}}\" == \"Phil\"",
+      "template": "\"{{#a}}{{this.b.c.d.e.name}}{{/a}}\" == \"Phil\"",
+      "spec-template": "\"{{#a}}{{b.c.d.e.name}}{{/a}}\" == \"Phil\"",
       "expected": "\"Phil\" == \"Phil\""
     },
     {

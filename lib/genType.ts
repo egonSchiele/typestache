@@ -255,6 +255,5 @@ export const genType = (parsed: Mustache[]): string => {
     }
     return null;
   });
-  console.log(JSON.stringify(obj, null, 2));
   return renderObj(obj);
 };

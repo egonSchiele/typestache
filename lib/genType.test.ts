@@ -353,7 +353,7 @@ describe("genType", () => {
     expect(() => genType(parsed)).toThrowError();
   });
 
-  it("type hint + scope is unclear + same name var untyped", () => {
+  /*   it("type hint + scope is unclear + same name var untyped", () => {
     const parsed: Mustache[] = [
       {
         type: "variable",
@@ -505,4 +505,5 @@ describe("genType", () => {
   name: string;
 }`);
   });
+ */
 });

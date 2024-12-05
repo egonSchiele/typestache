@@ -10,7 +10,7 @@ export type VariableTag = {
   type: "variable";
   name: string[];
   triple: boolean;
-  scope?: "local" | "global";
+  scope: "local" | "global";
   varType?: string[];
 };
 

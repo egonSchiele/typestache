@@ -39,7 +39,7 @@ describe("Mustache Parser", () => {
   });
 
   it("should handle variables nested within sections", () => {
-    const template = "{{#user}}{{name}}{{/user}}";
+    const template = "{{#user}}{{this.name}}{{/user}}";
     const context = { user: { name: "Adit" } };
     const result = apply(template, context);
     expect(result).toBe("Adit");
