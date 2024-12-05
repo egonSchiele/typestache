@@ -222,13 +222,6 @@ export const genType = (parsed: Mustache[]): string => {
           return;
         }
       });
-
-      /* If every nested variable is local, that means this can't be a boolean,
-        it has to be an object, because it has all these nested keys on it. */
-      if (nestedVars.length > 0 && !allLocals && !allGlobals) {
-        // object or boolean
-        deepSet(obj, [...content.name], ["boolean"]);
-      }
     }
     if (content.type === "inverted") {
       obj = mergeObj(obj, nestedObj(content.name));
