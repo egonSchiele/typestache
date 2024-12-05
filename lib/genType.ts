@@ -74,7 +74,14 @@ export const mergeObj = (obj1: Obj, obj2: Obj): Obj => {
     if (newArr.length === 1) {
       return newArr[0];
     }
-    throw new Error(`can't merge ${obj1} and ${obj2}, the types conflict`);
+    if (newArr.length === 0) {
+      return [DEFAULT_TYPE];
+    }
+    throw new Error(
+      `can't merge ${JSON.stringify(obj1)} and ${JSON.stringify(
+        obj2
+      )}, the types conflict`
+    );
   }
 
   const keys = uniq([getKeys(obj1), getKeys(obj2)].flat());

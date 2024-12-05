@@ -433,4 +433,25 @@ describe("genType", () => {
   name: number;
 }`);
   });
+
+  it("Same variable used twice with no type definition", () => {
+    const parsed: Mustache[] = [
+      {
+        type: "variable",
+        triple: false,
+        name: ["name"],
+        scope: "global",
+      },
+      {
+        type: "variable",
+        triple: false,
+        name: ["name"],
+        scope: "global",
+      },
+    ];
+    const result = genType(parsed);
+    expect(result).toBe(`{
+  name: string | boolean | number;
+}`);
+  });
 });
