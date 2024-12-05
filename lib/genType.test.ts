@@ -525,4 +525,41 @@ describe("genType", () => {
   name: string | boolean | number;
 }`);
   });
+
+  it("optional type", () => {
+    const parsed: Mustache[] = [
+      {
+        type: "variable",
+        triple: false,
+        name: ["name"],
+        scope: "global",
+        varType: {
+          name: ["string"],
+          optional: true,
+        },
+      },
+    ];
+    const result = genType(parsed);
+    expect(result).toBe(`{
+  name?: string;
+}`);
+  });
+
+  it("optional type, no hint", () => {
+    const parsed: Mustache[] = [
+      {
+        type: "variable",
+        triple: false,
+        name: ["name"],
+        scope: "global",
+        varType: {
+          optional: true,
+        },
+      },
+    ];
+    const result = genType(parsed);
+    expect(result).toBe(`{
+  name?: string | boolean | number;
+}`);
+  });
 });

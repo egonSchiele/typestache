@@ -73,4 +73,63 @@ describe("Variable tags", () => {
       { type: "text", content: "!" },
     ]);
   });
+
+  it("should parse an optional type correctly", () => {
+    const template = "Hello {{name?:string}}!";
+    const result = mustacheParser(template);
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+
+    expect(result.result).toMatchObject([
+      { type: "text", content: "Hello " },
+      {
+        type: "variable",
+        name: ["name"],
+        varType: {
+          name: ["string"],
+          optional: true,
+        },
+      },
+      { type: "text", content: "!" },
+    ]);
+  });
+
+  it("should parse an multiple types correctly", () => {
+    const template = "Hello {{name?:string|number}}!";
+    const result = mustacheParser(template);
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+
+    expect(result.result).toMatchObject([
+      { type: "text", content: "Hello " },
+      {
+        type: "variable",
+        name: ["name"],
+        varType: {
+          name: ["string", "number"],
+          optional: true,
+        },
+      },
+      { type: "text", content: "!" },
+    ]);
+  });
+
+  it("should parse a variable as optional even if no type hint was given", () => {
+    const template = "Hello {{name?}}!";
+    const result = mustacheParser(template);
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+
+    expect(result.result).toMatchObject([
+      { type: "text", content: "Hello " },
+      {
+        type: "variable",
+        name: ["name"],
+        varType: {
+          optional: true,
+        },
+      },
+      { type: "text", content: "!" },
+    ]);
+  });
 });

@@ -44,8 +44,19 @@ const tagName: Parser<string[]> = (input: string) => {
   }
 };
 
-const varType: Parser<VarType> = seq(
+const optionalType: Parser<VarType> = seq(
+  [optional(spaces), optional(capture(str("?"), "optional"))],
+  (r: any, c: any) => {
+    return {
+      optional: true,
+    };
+  }
+);
+
+const _varType: Parser<VarType> = seq(
   [
+    optional(spaces),
+    optional(capture(str("?"), "optional")),
     optional(spaces),
     str(":"),
     optional(spaces),
@@ -53,7 +64,6 @@ const varType: Parser<VarType> = seq(
       sepBy(or(str(" | "), char("|")), regexParser("([a-zA-Z0-9_]+)")),
       "name"
     ),
-    optional(capture(str("?"), "optional")),
   ],
   (r: any, c: any) => {
     return {
@@ -62,6 +72,8 @@ const varType: Parser<VarType> = seq(
     };
   }
 );
+
+const varType: Parser<VarType> = or(_varType, optionalType);
 
 const captureWithScope = (captures: VariableTag): VariableTag => {
   if (captures.name[0] === "this") {
