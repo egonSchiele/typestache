@@ -18,6 +18,9 @@ this will return an object like
 
 { user: { emails: { address: ["string"] } } }
 
+optional: if true, the last key will be prefixed with OPTIONAL
+typeToSet: if provided, this will be the type set at the last key
+
 */
 export const nestedObj = (
   keys: string[],
@@ -123,6 +126,7 @@ export const renderObj = (obj: Obj, level: number = 1): string => {
     .map(([_key, value]) => {
       let key = _key;
       let optStr = "";
+      let arrayStr = "";
       if (key.startsWith(OPTIONAL)) {
         const newkey = key.replace(OPTIONAL, "");
         if (obj[newkey]) {
@@ -133,16 +137,20 @@ export const renderObj = (obj: Obj, level: number = 1): string => {
         key = newkey;
         optStr = "?";
       }
+      if (key.endsWith("[]")) {
+        key = key.replace("[]", "");
+        arrayStr = "[]";
+      }
       if (Array.isArray(value)) {
         return `${"  ".repeat(level)}${key}${optStr}: ${renderValue(
           value,
           level
-        )};`;
+        )}${arrayStr};`;
       }
       return `${"  ".repeat(level)}${key}${optStr}: ${renderObj(
         value,
         level + 1
-      )};`;
+      )}${arrayStr};`;
     })
     .filter((v) => v !== "")
     .join("\n");
@@ -173,7 +181,12 @@ const deepSet = (obj: Obj, keys: string[], value: any): void => {
     }
     if (i === keys.length - 1) {
       if (value === OPTIONAL) {
-        current[`${OPTIONAL}${key}`] = current[key];
+        const optionalKey = `${OPTIONAL}${key}`;
+        if (optionalKey in current) {
+          // already set as optional
+          return;
+        }
+        current[optionalKey] = current[key];
         delete current[key];
       } else if (Array.isArray(current[key])) {
         current[key] = uniq([...current[key], value]);
@@ -218,9 +231,17 @@ export const genType = (parsed: Mustache[]): string => {
     if (content.type === "section") {
       const nestedVars = content.content.filter((c) => c.type === "variable");
       const allGlobals = nestedVars.every((v) => v.scope === "global");
-      const allLocals = nestedVars.every((v) => v.scope === "local");
+      // no local vars, therefore boolean,
+      // also check if optional
       if (nestedVars.length === 0 || allGlobals) {
-        obj = mergeObj(obj, nestedObj(content.name, false, ["boolean"]));
+        obj = mergeObj(
+          obj,
+          nestedObj(
+            content.name,
+            content.varType?.optional,
+            content.varType?.name || ["boolean"]
+          )
+        );
       }
 
       nestedVars.forEach((variable: VariableTag) => {
@@ -248,6 +269,11 @@ export const genType = (parsed: Mustache[]): string => {
           return;
         }
       });
+      // is this optional?
+      // This, unfortunately, has to come after we have processed all the nested variables
+      if (content.varType?.optional) {
+        deepSet(obj, content.name, OPTIONAL);
+      }
     }
     if (content.type === "inverted") {
       obj = mergeObj(obj, nestedObj(content.name));

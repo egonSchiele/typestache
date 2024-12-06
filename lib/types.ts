@@ -28,6 +28,7 @@ export type SectionTag = {
   type: "section";
   name: string[];
   content: Mustache[];
+  varType?: VarType;
 };
 
 export type InvertedTag = {

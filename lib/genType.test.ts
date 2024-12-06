@@ -562,4 +562,63 @@ describe("genType", () => {
   name?: string | boolean | number;
 }`);
   });
+
+  it("optional section with hint", () => {
+    const parsed: Mustache[] = [
+      {
+        type: "section",
+        name: ["person"],
+        varType: {
+          name: ["string", "number"],
+          optional: true,
+        },
+        content: [
+          {
+            type: "variable",
+            scope: "global",
+            name: ["name"],
+            varType: {
+              optional: false,
+            },
+            triple: false,
+          },
+        ],
+      },
+    ];
+    const result = genType(parsed);
+    expect(result).toBe(`{
+  person?: string | number;
+  name: string | boolean | number;
+}`);
+  });
+
+  it("optional section, no hint", () => {
+    const parsed: Mustache[] = [
+      {
+        type: "section",
+        name: ["person"],
+        varType: {
+          optional: true,
+        },
+        content: [
+          {
+            type: "variable",
+            scope: "local",
+            name: ["name"],
+            varType: {
+              name: ["string"],
+              optional: false,
+            },
+            triple: false,
+          },
+        ],
+      },
+    ];
+    const result = genType(parsed);
+    expect(result).toBe(`{
+  person?: {
+    name: string;
+  };
+}`);
+  });
 });

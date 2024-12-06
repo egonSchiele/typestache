@@ -1,5 +1,7 @@
 import {
+  CaptureParser,
   Parser,
+  PlainObject,
   between,
   capture,
   char,
@@ -16,6 +18,7 @@ import {
   set,
   spaces,
   str,
+  trace,
 } from "tarsec";
 
 import {
@@ -32,7 +35,7 @@ import {
 
 const _tagName: Parser<string[]> = sepBy(
   char("."),
-  regexParser("([a-zA-Z0-9_]+)")
+  regexParser("([\\[\\]a-zA-Z0-9_]+)")
 );
 
 const tagName: Parser<string[]> = (input: string) => {
@@ -48,7 +51,7 @@ const optionalType: Parser<VarType> = seq(
   [optional(spaces), optional(capture(str("?"), "optional"))],
   (r: any, c: any) => {
     return {
-      optional: true,
+      optional: !!c.optional,
     };
   }
 );
@@ -95,33 +98,49 @@ const captureWithScope = (captures: VariableTag): VariableTag => {
   };
 };
 
+const openingTag = (open: string, close: string) =>
+  seqC(
+    str(open),
+    optional(spaces),
+    capture(tagName, "name"),
+    optional(capture(varType, "varType")),
+    optional(spaces),
+    str(close)
+  );
+
+export function captureCaptures<T extends PlainObject>(
+  parser: Parser<T>
+): CaptureParser<T, T> {
+  return trace(`captureCaptures()`, (input: string) => {
+    let result = parser(input);
+    if (result.success) {
+      return {
+        ...result,
+        captures: result.result,
+      };
+    }
+    return result;
+  });
+}
+
 const doubleVariableTag: Parser<VariableTag> = seqC(
   set("type", "variable"),
   set("scope", "global"),
-  str("{{"),
-  optional(spaces),
-  capture(tagName, "name"),
-  optional(capture(varType, "varType")),
-  optional(spaces),
-  str("}}"),
+  captureCaptures(openingTag("{{", "}}")),
   set("triple", false)
 );
 
 const tripleVariableTag: Parser<VariableTag> = seqC(
   set("type", "variable"),
   set("scope", "global"),
-  str("{{{"),
-  optional(spaces),
-  capture(tagName, "name"),
-  optional(capture(varType, "varType")),
-  optional(spaces),
-  str("}}}"),
+  captureCaptures(openingTag("{{{", "}}}")),
   set("triple", true)
 );
 
 const ampersandVariableTag: Parser<VariableTag> = seqC(
   set("type", "variable"),
   set("scope", "global"),
+
   str("{{"),
   optional(spaces),
   char("&"),
@@ -130,6 +149,7 @@ const ampersandVariableTag: Parser<VariableTag> = seqC(
   optional(capture(varType, "varType")),
   optional(spaces),
   str("}}"),
+
   set("triple", true)
 );
 
@@ -199,7 +219,7 @@ const contentParser: Parser<Mustache[]> = many1(
 
 const sectionTag: Parser<SectionTag> = seqC(
   set("type", "section"),
-  capture(between(str("{{#"), str("}}"), tagName), "name"),
+  captureCaptures(openingTag("{{#", "}}")),
   capture(contentParser, "content"),
   str("{{/"),
   tagName,
