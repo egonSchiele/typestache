@@ -7,19 +7,19 @@ Typestache is still a work in progress. Use with caution.
 ## Quickstart
 Install Typestache:
 
-```
+```bash
 npm install typestache
 ```
 
 Typestache consists of a CLI tool and a library. To use it, point the CLI tool towards your template directory:
 
-```
+```bash
 typestache src/templates
 ```
 
 Typestache will find your mustache files, and create a corresponding TypeScript file:
 
-```
+```bash
 src/templates
   - myTemplate.mustache
   - myTemplate.ts
@@ -27,7 +27,7 @@ src/templates
 
 Now simply import this TypeScript file and render it.
 
-```
+```typescript
 import myTemplate from './myTemplate';
 
 const data = {
