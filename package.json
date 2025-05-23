@@ -9,11 +9,14 @@
     "coverage": "vitest --coverage",
     "build": "rm -rf dist && tsc",
     "start": "cd dist && node index.js",
-    "gen": "node scripts/typestache.js -v examples"
+    "gen": "node ./dist/scripts/typestache.js examples"
   },
   "files": [
     "./dist/lib"
   ],
+  "bin": {
+    "typestache": "./dist/scripts/typestache.js"
+  },
   "exports": {
     ".": {
       "import": "./dist/lib/index.js",

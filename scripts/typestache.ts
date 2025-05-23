@@ -1,8 +1,8 @@
 import fs from "fs";
 import path from "path";
 import process from "process";
-import { genType, mustacheParser } from "typestache";
-import { Command } from 'commander';
+import { genType, mustacheParser, Mustache } from "../lib/index.js";
+import { Command, OptionValues } from 'commander';
 
 const FgYellow = "\x1b[33m";
 const FgGreen = "\x1b[32m";
@@ -10,9 +10,9 @@ const FgRed = "\x1b[31m";
 const FgReset = "\x1b[0m";
 
 
-export function findFilesRecursively(dir, pattern) {
-    var results = [];
-    function walk(dir) {
+export function findFilesRecursively(dir: string, pattern: string): string[] {
+    var results: string[] = [];
+    function walk(dir: string) {
         var files = fs.readdirSync(dir);
         for (var _i = 0, files_1 = files; _i < files_1.length; _i++) {
             var file = files_1[_i];
@@ -74,7 +74,7 @@ templateFiles.forEach(function (templateFile) {
         console.error("couldn't parse", templateFile, parsed.message);
     }
 });
-function writeTemplateFile(contents, parsed, templateFile, options) {
+function writeTemplateFile(contents: string, parsed: Mustache[], templateFile: string, options: OptionValues) {
     const indexStr = `// THIS FILE WAS AUTO-GENERATED
 // Source: ${templateFile}
 // Any manual changes will be lost.
