@@ -59,7 +59,7 @@ Typestache also extends mustache syntax to add type hints. Here's a short exampl
 I am {{age:number}} years old.
 ```
 
-This is covered in more detail later in this README.
+Now `age` will be a `number` in the generated TypeScript file.
 
 **Heads up, typestache is *not* a drop-in replacement for mustache.** Read more below.
 
