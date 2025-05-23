@@ -53,12 +53,11 @@ if (!fs.existsSync(dirName)) {
 if (options.verbose) {
   console.log("==========================");
   console.log("Directory name:", FgYellow, dirName, FgReset);
-  console.log("Current working directory:", process.cwd());
-  console.log("Absolute path:", path.resolve(dirName));
+  console.log("Absolute path: ", path.resolve(dirName));
   console.log("==========================\n");
 }
 
-var templateFiles = findFilesRecursively(dirName, "template.mustache");
+var templateFiles = findFilesRecursively(dirName, ".mustache");
 templateFiles.forEach(function (templateFile) {
   if (options.verbose) {
     console.log(`${FgYellow}PROCESSING`, FgReset, templateFile);
@@ -87,21 +86,20 @@ export const template = \`${contents}\`;
 
 export type TemplateType = ${genType(parsed)};
 
-export const render = (args: TemplateType) => {
+const render = (args: TemplateType) => {
   return apply(template, args);
 }
+
+export default render;
     `;
-  var indexOutputPath = templateFile.replace(
-    "template.mustache",
-    "template.ts"
-  );
+  var outPath = templateFile.replace(".mustache", ".ts");
 
   if (options.dryRun) {
-    console.log(`[DRY RUN] Would write to: ${indexOutputPath}`);
+    console.log(`[DRY RUN] Would write to: ${outPath}`);
   } else {
-    fs.writeFileSync(indexOutputPath, indexStr);
+    fs.writeFileSync(outPath, indexStr);
     if (options.verbose) {
-      console.log(`${FgYellow}WROTE     `, FgGreen, indexOutputPath, FgReset);
+      console.log(`${FgYellow}WROTE     `, FgGreen, outPath, FgReset);
     }
   }
 }
