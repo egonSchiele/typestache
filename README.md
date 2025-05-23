@@ -11,7 +11,7 @@ Install Typestache:
 npm install typestache
 ```
 
-Run Typestache and point it towards your template directory:
+Typestache consists of a CLI tool and a library. To use it, point the CLI tool towards your template directory:
 
 ```
 typestache src/templates
@@ -21,14 +21,14 @@ Typestache will find your mustache files, and create a corresponding TypeScript 
 
 ```
 src/templates
-  - my_template.mustache
-  - my_template.ts
+  - myTemplate.mustache
+  - myTemplate.ts
 ```
 
-Each of these TypeScript files exports a render function. Import this function and pass it your data:
+Now simply import this TypeScript file and render it.
 
 ```
-import { render } from './my_template';
+import myTemplate from './myTemplate';
 
 const data = {
   name: 'Adit',
@@ -36,32 +36,36 @@ const data = {
   in_ca: true
 };
 
-const result = render(data);
+const result = myTemplate(data);
 ```
 
-This function is typed using your mustache template. If you pass incorrect data, TypeScript will tell you.
+Easy as that! Behind the scenes, Typestache has converted your mustache template into a typed template for you, so if you have a type error, TypeScript will tell you. Example:
 
-- Heads up, typestache is *not* a drop-in replacement for mustache. Read more below.
-- Or, learn how to add type hints to your mustache file. If you don't add types, typestache will derive them for you.
+```typescript
+const data = {
+  name: 'Adit',
+  value: 10000,
+  in_ca: "true" // Oops, this should be a boolean
+};
 
-## Introduction
-There's a big hole in your static typing: mustache. It's only at runtime that you'll find out you're sending the wrong data to your mustache template, or you have forgotten to include a variable or something. Typestache adds static type checking to mustache templates.
+const result = myTemplate(data); // Error: Type 'string' is not assignable to type 'boolean'.
+```
 
-## Is typestache is right for you? 
+[See examples here](https://github.com/egonSchiele/typestache/tree/main/examples).
 
-### Pros
-- Statically typed. If the code compiles, it probably works.
-- Very fast rendering. Typestache pre-compiles your mustache files, so there's nothing to parse at runtime.
-- Single dependency. Typestache just depends on [one package](https://github.com/egonSchiele/tarsec), which itself has zero dependencies.
+Typestache also extends mustache syntax to add type hints. Here's a short example:
 
-### Cons
-- Typestashe generates TypeScript types, so to use typestashe you must be using TypeScript.
-- Typestache doesn't fully support the mustache spec, read more about that below.
-- You need to introduce an additional step in your build process to compile your mustache files.
+```mustache
+I am {{age:number}} years old.
+```
+
+This is covered in more detail later in this README.
+
+**Heads up, typestache is *not* a drop-in replacement for mustache.** Read more below.
 
 ## Deriving types
 
-Typestashe will automatically derive types for you. For example, given this template
+Typestache will automatically derive types for you. For example, given this template
 
 ```mustache
 {{#person}}
@@ -69,7 +73,7 @@ Typestashe will automatically derive types for you. For example, given this temp
 {{/person}}
 ```
 
-Typestashe will derive this type:
+Typestache will derive this type:
 
 ```typescript
 type TemplateType = {
