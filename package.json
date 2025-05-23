@@ -8,7 +8,8 @@
     "test": "vitest",
     "coverage": "vitest --coverage",
     "build": "rm -rf dist && tsc",
-    "start": "cd dist && node index.js"
+    "start": "cd dist && node index.js",
+    "gen": "node scripts/typestache.js -v examples"
   },
   "files": [
     "./dist/lib"
@@ -20,10 +21,14 @@
     }
   },
   "types": "./dist/lib/index.d.ts",
-  "keywords": ["parser", "mustache"],
+  "keywords": [
+    "parser",
+    "mustache"
+  ],
   "license": "ISC",
   "dependencies": {
     "@types/node": "^22.9.1",
+    "commander": "^14.0.0",
     "tarsec": "^0.0.18",
     "typescript": "^5.6.3"
   },
