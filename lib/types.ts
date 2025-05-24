@@ -7,7 +7,7 @@ export type MustacheTag =
   | PartialTag;
 
 export type VarType = {
-  name?: string[];
+  name?: string[]; // e.g. ["string", "number"]
   optional: boolean;
 };
 
