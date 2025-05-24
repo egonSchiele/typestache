@@ -258,13 +258,16 @@ const sectionTag: Parser<SectionTag> = map(
   captureSectionWithScope
 );
 
-const invertedTag: Parser<InvertedTag> = seqC(
-  set("type", "inverted"),
-  capture(between(str("{{^"), str("}}"), tagName), "name"),
-  capture((input: string) => createMustacheParser()(input), "content"),
-  str("{{/"),
-  tagName,
-  str("}}")
+const invertedTag: Parser<InvertedTag> = map(
+  seqC(
+    set("type", "inverted"),
+    capture(between(str("{{^"), str("}}"), tagName), "name"),
+    capture((input: string) => createMustacheParser()(input), "content"),
+    str("{{/"),
+    tagName,
+    str("}}")
+  ),
+  captureSectionWithScope
 );
 
 export const mustacheParser: Parser<Mustache[]> = createMustacheParser();

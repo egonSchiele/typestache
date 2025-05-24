@@ -36,6 +36,7 @@ export type InvertedTag = {
   type: "inverted";
   name: string[];
   content: Mustache[];
+  scope: "local" | "global";
 };
 
 export type CommentTag = {

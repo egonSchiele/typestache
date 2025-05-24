@@ -231,7 +231,6 @@ export const genType = (parsed: Mustache[]): string => {
     if (content.type === "section") {
       const nestedVars = content.content.filter((c) => c.type === "variable");
       const nestedSections = content.content.filter((c) => c.type === "section" || c.type === "inverted");
-      const allGlobals = nestedVars.every((v) => v.scope === "global");
       
       // Check if this section has local variables or nested sections
       const hasLocalVars = nestedVars.some((v) => v.scope === "local");
@@ -241,16 +240,13 @@ export const genType = (parsed: Mustache[]): string => {
       const sectionPath = content.scope === "local" 
         ? [...contextPath, ...content.name]
         : [...content.name];
-      
-      // If no local vars and no nested sections, it's a boolean
-      if (!hasLocalVars && !hasNestedSections) {
+
+      // If this section has nested sections but no local vars, we need to create an object container
+      if (hasNestedSections && !hasLocalVars) {
+        // Ensure this section exists as an object to contain nested content
         obj = mergeObj(
           obj,
-          nestedObj(
-            sectionPath,
-            content.varType?.optional,
-            content.varType?.name || ["boolean"]
-          )
+          nestedObj(sectionPath, content.varType?.optional, [{}])
         );
       }
 
@@ -288,14 +284,29 @@ export const genType = (parsed: Mustache[]): string => {
         }
       });
 
+      // If no local vars and no nested sections, it's a boolean
+      if (!hasLocalVars && !hasNestedSections) {
+        obj = mergeObj(
+          obj,
+          nestedObj(
+            sectionPath,
+            content.varType?.optional,
+            content.varType?.name || ["boolean"]
+          )
+        );
+      }
+
       // is this optional?
-      // This, unfortunately, has to come after we have processed all the nested variables
       if (content.varType?.optional) {
         deepSet(obj, sectionPath, OPTIONAL);
       }
     }
     if (content.type === "inverted") {
-      obj = mergeObj(obj, nestedObj([...contextPath, ...content.name]));
+      const invertedPath = content.scope === "local" 
+        ? [...contextPath, ...content.name]
+        : [...content.name];
+        
+      obj = mergeObj(obj, nestedObj(invertedPath));
       
       // Recursively process nested content in inverted sections
       content.content.forEach((nestedContent) => {
