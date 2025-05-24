@@ -213,14 +213,23 @@ const partialTag: Parser<PartialTag> = seqC(
   capture(between(str("{{>"), str("}}"), tagName), "name")
 );
 
-const contentParser: Parser<Mustache[]> = many1(
-  or(variableTag, commentTag, partialTag, textParser)
-);
+const createMustacheParser = (): Parser<Mustache[]> =>
+  many1(
+    or(
+      variableTag,
+      sectionTag,
+      invertedTag,
+      commentTag,
+      partialTag,
+      implicitVariableTag,
+      textParser
+    )
+  );
 
 const sectionTag: Parser<SectionTag> = seqC(
   set("type", "section"),
   captureCaptures(openingTag("{{#", "}}")),
-  capture(contentParser, "content"),
+  capture((input: string) => createMustacheParser()(input), "content"),
   str("{{/"),
   tagName,
   str("}}")
@@ -229,20 +238,10 @@ const sectionTag: Parser<SectionTag> = seqC(
 const invertedTag: Parser<InvertedTag> = seqC(
   set("type", "inverted"),
   capture(between(str("{{^"), str("}}"), tagName), "name"),
-  capture(contentParser, "content"),
+  capture((input: string) => createMustacheParser()(input), "content"),
   str("{{/"),
   tagName,
   str("}}")
 );
 
-export const mustacheParser: Parser<Mustache[]> = many1(
-  or(
-    variableTag,
-    sectionTag,
-    invertedTag,
-    commentTag,
-    partialTag,
-    implicitVariableTag,
-    textParser
-  )
-);
+export const mustacheParser: Parser<Mustache[]> = createMustacheParser();
