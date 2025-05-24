@@ -127,6 +127,7 @@ describe("genType", () => {
       {
         type: "section",
         name: ["user"],
+        scope: "global",
         content: [],
       },
     ];
@@ -141,6 +142,7 @@ describe("genType", () => {
       {
         type: "section",
         name: ["user"],
+        scope: "global",
         content: [
           { type: "variable", scope: "global", triple: false, name: ["name"] },
         ],
@@ -158,6 +160,7 @@ describe("genType", () => {
       {
         type: "section",
         name: ["user"],
+        scope: "global",
         content: [
           { type: "variable", triple: false, name: ["name"], scope: "local" },
         ],
@@ -176,6 +179,7 @@ describe("genType", () => {
       {
         type: "section",
         name: ["user"],
+        scope: "global",
         content: [
           { type: "variable", triple: false, name: ["name"], scope: "local" },
         ],
@@ -201,6 +205,7 @@ describe("genType", () => {
       {
         type: "section",
         name: ["user"],
+        scope: "global",
         content: [
           { type: "variable", triple: false, name: ["name"], scope: "global" },
         ],
@@ -237,6 +242,7 @@ describe("genType", () => {
       {
         type: "section",
         name: ["user"],
+        scope: "global",
         content: [
           {
             type: "variable",
@@ -263,6 +269,7 @@ describe("genType", () => {
       {
         type: "section",
         name: ["user"],
+        scope: "global",
         content: [
           {
             type: "variable",
@@ -290,6 +297,7 @@ describe("genType", () => {
       {
         type: "section",
         name: ["user"],
+        scope: "global",
         content: [
           {
             type: "variable",
@@ -412,6 +420,7 @@ describe("genType", () => {
       {
         type: "section",
         name: ["user"],
+        scope: "global",
         content: [
           {
             type: "variable",
@@ -444,6 +453,7 @@ describe("genType", () => {
       {
         type: "section",
         name: ["user"],
+        scope: "global",
         content: [
           {
             type: "variable",
@@ -472,6 +482,7 @@ describe("genType", () => {
       {
         type: "section",
         name: ["user"],
+        scope: "global",
         content: [
           {
             type: "variable",
@@ -568,6 +579,7 @@ describe("genType", () => {
       {
         type: "section",
         name: ["person"],
+        scope: "global",
         varType: {
           name: ["string", "number"],
           optional: true,
@@ -597,6 +609,7 @@ describe("genType", () => {
       {
         type: "section",
         name: ["person"],
+        scope: "global",
         varType: {
           optional: true,
         },
@@ -629,10 +642,12 @@ describe("Nested block type generation", () => {
       {
         type: "section",
         name: ["in_ca"],
+        scope: "global",
         content: [
           {
             type: "section",
             name: ["person"],
+            scope: "global",
             content: [
               {
                 type: "variable",
@@ -660,10 +675,12 @@ describe("Nested block type generation", () => {
       {
         type: "section",
         name: ["person"],
+        scope: "global",
         content: [
           {
             type: "section",
-            name: ["this", "attrs"],
+            name: ["attrs"],
+            scope: "local",
             content: [
               {
                 type: "variable",
@@ -691,10 +708,12 @@ describe("Nested block type generation", () => {
       {
         type: "section",
         name: ["person"],
+        scope: "global",
         content: [
           {
             type: "section",
-            name: ["this", "connections[]"],
+            name: ["connections[]"],
+            scope: "local",
             content: [
               {
                 type: "variable",
@@ -722,14 +741,17 @@ describe("Nested block type generation", () => {
       {
         type: "section",
         name: ["level1"],
+        scope: "global",
         content: [
           {
             type: "section",
             name: ["level2"],
+            scope: "global",
             content: [
               {
                 type: "section",
                 name: ["level3"],
+                scope: "global",
                 content: [
                   {
                     type: "variable",
@@ -761,10 +783,12 @@ describe("Nested block type generation", () => {
       {
         type: "inverted",
         name: ["outer"],
+        scope: "global",
         content: [
           {
             type: "inverted",
             name: ["inner"],
+            scope: "global",
             content: [
               {
                 type: "variable",
@@ -789,10 +813,12 @@ describe("Nested block type generation", () => {
       {
         type: "section",
         name: ["section"],
+        scope: "global",
         content: [
           {
             type: "inverted",
             name: ["inverted"],
+            scope: "global",
             content: [
               {
                 type: "variable",

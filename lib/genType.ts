@@ -237,12 +237,17 @@ export const genType = (parsed: Mustache[]): string => {
       const hasLocalVars = nestedVars.some((v) => v.scope === "local");
       const hasNestedSections = nestedSections.length > 0;
       
+      // Determine the path for this section based on its scope
+      const sectionPath = content.scope === "local" 
+        ? [...contextPath, ...content.name]
+        : [...content.name];
+      
       // If no local vars and no nested sections, it's a boolean
       if (!hasLocalVars && !hasNestedSections) {
         obj = mergeObj(
           obj,
           nestedObj(
-            [...contextPath, ...content.name],
+            sectionPath,
             content.varType?.optional,
             content.varType?.name || ["boolean"]
           )
@@ -267,7 +272,7 @@ export const genType = (parsed: Mustache[]): string => {
           obj = mergeObj(
             obj,
             nestedObj(
-              [...contextPath, ...content.name, ...variable.name],
+              [...sectionPath, ...variable.name],
               variable.varType?.optional || false,
               variable.varType?.name || undefined
             )
@@ -279,14 +284,14 @@ export const genType = (parsed: Mustache[]): string => {
       // Recursively process nested sections and inverted sections
       content.content.forEach((nestedContent) => {
         if (nestedContent.type === "section" || nestedContent.type === "inverted") {
-          processContent(nestedContent, [...contextPath, ...content.name]);
+          processContent(nestedContent, sectionPath);
         }
       });
 
       // is this optional?
       // This, unfortunately, has to come after we have processed all the nested variables
       if (content.varType?.optional) {
-        deepSet(obj, [...contextPath, ...content.name], OPTIONAL);
+        deepSet(obj, sectionPath, OPTIONAL);
       }
     }
     if (content.type === "inverted") {

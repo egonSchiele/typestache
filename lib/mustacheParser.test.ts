@@ -143,6 +143,7 @@ describe("Variable tags", () => {
       {
         type: "section",
         name: ["person"],
+        scope: "global",
         varType: {
           name: ["string", "number"],
           optional: false,
@@ -172,6 +173,7 @@ describe("Variable tags", () => {
       {
         type: "section",
         name: ["person"],
+        scope: "global",
         varType: {
           optional: true,
         },
@@ -200,6 +202,7 @@ describe("Variable tags", () => {
       {
         type: "section",
         name: ["person"],
+        scope: "global",
         varType: {
           name: ["string", "number"],
           optional: true,
@@ -231,10 +234,12 @@ describe("Nested blocks", () => {
       {
         type: "section",
         name: ["outer"],
+        scope: "global",
         content: [
           {
             type: "section",
             name: ["inner"],
+            scope: "global",
             content: [
               {
                 type: "variable",
@@ -259,14 +264,17 @@ describe("Nested blocks", () => {
       {
         type: "section",
         name: ["level1"],
+        scope: "global",
         content: [
           {
             type: "section",
             name: ["level2"],
+            scope: "global",
             content: [
               {
                 type: "section",
                 name: ["level3"],
+                scope: "global",
                 content: [
                   {
                     type: "variable",
@@ -293,10 +301,12 @@ describe("Nested blocks", () => {
       {
         type: "inverted",
         name: ["outer"],
+        scope: "global",
         content: [
           {
             type: "inverted",
             name: ["inner"],
+            scope: "global",
             content: [
               {
                 type: "variable",
@@ -321,10 +331,12 @@ describe("Nested blocks", () => {
       {
         type: "section",
         name: ["section"],
+        scope: "global",
         content: [
           {
             type: "inverted",
             name: ["inverted"],
+            scope: "global",
             content: [
               {
                 type: "variable",
@@ -349,11 +361,13 @@ describe("Nested blocks", () => {
       {
         type: "section",
         name: ["outer"],
+        scope: "global",
         content: [
           { type: "text", content: "Before " },
           {
             type: "section",
             name: ["inner"],
+            scope: "global",
             content: [
               {
                 type: "variable",

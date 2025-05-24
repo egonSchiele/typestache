@@ -98,6 +98,26 @@ const captureWithScope = (captures: VariableTag): VariableTag => {
   };
 };
 
+const captureSectionWithScope = (captures: any): any => {
+  if (captures.name[0] === "this") {
+    return {
+      ...captures,
+      scope: "local",
+      name: captures.name.slice(1),
+    };
+  } else if (captures.name[0] === "global") {
+    return {
+      ...captures,
+      scope: "global", 
+      name: captures.name.slice(1),
+    };
+  }
+  return {
+    ...captures,
+    scope: "global",
+  };
+};
+
 const openingTag = (open: string, close: string) =>
   seqC(
     str(open),
@@ -226,13 +246,16 @@ const createMustacheParser = (): Parser<Mustache[]> =>
     )
   );
 
-const sectionTag: Parser<SectionTag> = seqC(
-  set("type", "section"),
-  captureCaptures(openingTag("{{#", "}}")),
-  capture((input: string) => createMustacheParser()(input), "content"),
-  str("{{/"),
-  tagName,
-  str("}}")
+const sectionTag: Parser<SectionTag> = map(
+  seqC(
+    set("type", "section"),
+    captureCaptures(openingTag("{{#", "}}")),
+    capture((input: string) => createMustacheParser()(input), "content"),
+    str("{{/"),
+    tagName,
+    str("}}")
+  ),
+  captureSectionWithScope
 );
 
 const invertedTag: Parser<InvertedTag> = seqC(

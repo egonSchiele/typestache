@@ -28,6 +28,7 @@ export type SectionTag = {
   type: "section";
   name: string[];
   content: Mustache[];
+  scope: "local" | "global";
   varType?: VarType;
 };
 
