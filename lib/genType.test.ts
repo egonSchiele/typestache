@@ -622,3 +622,194 @@ describe("genType", () => {
 }`);
   });
 });
+
+describe("Nested block type generation", () => {
+  it("should generate types for nested sections with local variables", () => {
+    const parsed: Mustache[] = [
+      {
+        type: "section",
+        name: ["in_ca"],
+        content: [
+          {
+            type: "section",
+            name: ["person"],
+            content: [
+              {
+                type: "variable",
+                scope: "local",
+                triple: false,
+                name: ["name"],
+              },
+            ],
+          },
+        ],
+      },
+    ];
+    const result = genType(parsed);
+    expect(result).toBe(`{
+  in_ca: {
+    person: {
+      name: string | boolean | number;
+    };
+  };
+}`);
+  });
+
+  it("should generate types for nested sections with this.attrs pattern", () => {
+    const parsed: Mustache[] = [
+      {
+        type: "section",
+        name: ["person"],
+        content: [
+          {
+            type: "section",
+            name: ["this", "attrs"],
+            content: [
+              {
+                type: "variable",
+                scope: "local",
+                triple: false,
+                name: ["name"],
+              },
+            ],
+          },
+        ],
+      },
+    ];
+    const result = genType(parsed);
+    expect(result).toBe(`{
+  person: {
+    attrs: {
+      name: string | boolean | number;
+    };
+  };
+}`);
+  });
+
+  it("should generate types for nested sections with array notation", () => {
+    const parsed: Mustache[] = [
+      {
+        type: "section",
+        name: ["person"],
+        content: [
+          {
+            type: "section",
+            name: ["this", "connections[]"],
+            content: [
+              {
+                type: "variable",
+                scope: "local",
+                triple: false,
+                name: ["name"],
+              },
+            ],
+          },
+        ],
+      },
+    ];
+    const result = genType(parsed);
+    expect(result).toBe(`{
+  person: {
+    connections: {
+      name: string | boolean | number;
+    }[];
+  };
+}`);
+  });
+
+  it("should generate types for deeply nested sections", () => {
+    const parsed: Mustache[] = [
+      {
+        type: "section",
+        name: ["level1"],
+        content: [
+          {
+            type: "section",
+            name: ["level2"],
+            content: [
+              {
+                type: "section",
+                name: ["level3"],
+                content: [
+                  {
+                    type: "variable",
+                    scope: "local",
+                    triple: false,
+                    name: ["value"],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ];
+    const result = genType(parsed);
+    expect(result).toBe(`{
+  level1: {
+    level2: {
+      level3: {
+        value: string | boolean | number;
+      };
+    };
+  };
+}`);
+  });
+
+  it("should generate types for nested inverted sections", () => {
+    const parsed: Mustache[] = [
+      {
+        type: "inverted",
+        name: ["outer"],
+        content: [
+          {
+            type: "inverted",
+            name: ["inner"],
+            content: [
+              {
+                type: "variable",
+                scope: "local",
+                triple: false,
+                name: ["value"],
+              },
+            ],
+          },
+        ],
+      },
+    ];
+    const result = genType(parsed);
+    expect(result).toBe(`{
+  outer: string | boolean | number;
+  inner: string | boolean | number;
+}`);
+  });
+
+  it("should generate types for mixed nested sections and inverted sections", () => {
+    const parsed: Mustache[] = [
+      {
+        type: "section",
+        name: ["section"],
+        content: [
+          {
+            type: "inverted",
+            name: ["inverted"],
+            content: [
+              {
+                type: "variable",
+                scope: "local",
+                triple: false,
+                name: ["value"],
+              },
+            ],
+          },
+        ],
+      },
+    ];
+    const result = genType(parsed);
+    expect(result).toBe(`{
+  section: {
+    inverted: string | boolean | number;
+  };
+}`);
+  });
+});

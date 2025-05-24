@@ -214,9 +214,9 @@ const deepSet = (obj: Obj, keys: string[], value: any): void => {
 export const genType = (parsed: Mustache[]): string => {
   let obj: Obj = {};
 
-  parsed.forEach((content: Mustache) => {
+  const processContent = (content: Mustache, contextPath: string[] = []) => {
     if (content.type === "text") {
-      return null;
+      return;
     }
     if (content.type === "variable") {
       obj = mergeObj(
@@ -230,20 +230,26 @@ export const genType = (parsed: Mustache[]): string => {
     }
     if (content.type === "section") {
       const nestedVars = content.content.filter((c) => c.type === "variable");
+      const nestedSections = content.content.filter((c) => c.type === "section" || c.type === "inverted");
       const allGlobals = nestedVars.every((v) => v.scope === "global");
-      // no local vars, therefore boolean,
-      // also check if optional
-      if (nestedVars.length === 0 || allGlobals) {
+      
+      // Check if this section has local variables or nested sections
+      const hasLocalVars = nestedVars.some((v) => v.scope === "local");
+      const hasNestedSections = nestedSections.length > 0;
+      
+      // If no local vars and no nested sections, it's a boolean
+      if (!hasLocalVars && !hasNestedSections) {
         obj = mergeObj(
           obj,
           nestedObj(
-            content.name,
+            [...contextPath, ...content.name],
             content.varType?.optional,
             content.varType?.name || ["boolean"]
           )
         );
       }
 
+      // Process variables in this section
       nestedVars.forEach((variable: VariableTag) => {
         if (variable.scope === "global") {
           /* If this is explicitly set as global, all we need to do
@@ -261,7 +267,7 @@ export const genType = (parsed: Mustache[]): string => {
           obj = mergeObj(
             obj,
             nestedObj(
-              [...content.name, ...variable.name],
+              [...contextPath, ...content.name, ...variable.name],
               variable.varType?.optional || false,
               variable.varType?.name || undefined
             )
@@ -269,22 +275,43 @@ export const genType = (parsed: Mustache[]): string => {
           return;
         }
       });
+
+      // Recursively process nested sections and inverted sections
+      content.content.forEach((nestedContent) => {
+        if (nestedContent.type === "section" || nestedContent.type === "inverted") {
+          processContent(nestedContent, [...contextPath, ...content.name]);
+        }
+      });
+
       // is this optional?
       // This, unfortunately, has to come after we have processed all the nested variables
       if (content.varType?.optional) {
-        deepSet(obj, content.name, OPTIONAL);
+        deepSet(obj, [...contextPath, ...content.name], OPTIONAL);
       }
     }
     if (content.type === "inverted") {
-      obj = mergeObj(obj, nestedObj(content.name));
+      obj = mergeObj(obj, nestedObj([...contextPath, ...content.name]));
+      
+      // Recursively process nested content in inverted sections
+      content.content.forEach((nestedContent) => {
+        if (nestedContent.type === "section" || nestedContent.type === "inverted") {
+          processContent(nestedContent, contextPath);
+        } else {
+          processContent(nestedContent, contextPath);
+        }
+      });
     }
     if (content.type === "comment") {
-      return null;
+      return;
     }
     if (content.type === "partial") {
-      return null;
+      return;
     }
-    return null;
+  };
+
+  parsed.forEach((content: Mustache) => {
+    processContent(content);
   });
+  
   return renderObj(obj);
 };
