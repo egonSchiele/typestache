@@ -1,98 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { nestedObj, mergeObj, renderObj, genType } from "./genType.js";
+import { genType } from "./genType.js";
 import { Mustache } from "./types.js";
 const DEFAULT_TYPE = "__DEFAULT_TYPE__";
-describe("nestedObj", () => {
-  it("should return an object with a single key", () => {
-    const result = nestedObj(["name"]);
-    expect(result).toEqual({ name: [DEFAULT_TYPE] });
-  });
-
-  it("should return an object with a single key and a nested object", () => {
-    const result = nestedObj(["user", "name"]);
-    expect(result).toEqual({ user: { name: [DEFAULT_TYPE] } });
-  });
-
-  it("should return an object with a single key and a nested array", () => {
-    const result = nestedObj(["user", "emails", "address"]);
-    expect(result).toEqual({
-      user: { emails: { address: [DEFAULT_TYPE] } },
-    });
-  });
-});
-
-describe("mergeObj", () => {
-  it("should merge two objects with a single key", () => {
-    const obj1 = { name: ["string"] };
-    const obj2 = { age: ["number"] };
-    const result = mergeObj(obj1, obj2);
-    expect(result).toEqual({ name: ["string"], age: ["number"] });
-  });
-
-  it("should merge two objects with a single key and a nested object", () => {
-    const obj1 = { user: { name: ["string"] } };
-    const obj2 = { user: { age: ["number"] } };
-    const result = mergeObj(obj1, obj2);
-    expect(result).toEqual({ user: { name: ["string"], age: ["number"] } });
-  });
-
-  it("should merge two objects with a single key and a nested array", () => {
-    const obj1 = { user: { emails: { address: ["string"] } } };
-    const obj2 = { user: { emails: { verified: ["boolean"] } } };
-    const result = mergeObj(obj1, obj2);
-    expect(result).toEqual({
-      user: { emails: { address: ["string"], verified: ["boolean"] } },
-    });
-  });
-});
-
-describe("renderObj", () => {
-  it("should render an object with a single key", () => {
-    const obj = { name: ["string"] };
-    const result = renderObj(obj);
-    expect(result).toBe(`{
-  name: string;
-}`);
-  });
-
-  it("should render an object with a single key and a nested object", () => {
-    const obj = { user: { name: ["string"] } };
-    const result = renderObj(obj);
-    expect(result).toBe(`{
-  user: {
-    name: string;
-  };
-}`);
-  });
-
-  it("should render an object with a nested array with multiple entries", () => {
-    const obj = { user: { emails: { address: ["string", "number"] } } };
-    const result = renderObj(obj);
-    expect(result).toBe(`{
-  user: {
-    emails: {
-      address: string | number;
-    };
-  };
-}`);
-  });
-
-  it("should render an object with a nested array with multiple entries, including an object", () => {
-    const obj = {
-      user: { emails: { address: ["string", { zip: ["number"] }] } },
-    };
-    const result = renderObj(obj);
-    expect(result).toBe(`{
-  user: {
-    emails: {
-      address: string | {
-        zip: number;
-      };
-    };
-  };
-}`);
-  });
-});
 
 describe("genType", () => {
   it("should generate a type for a single variable", () => {
@@ -126,6 +35,7 @@ describe("genType", () => {
     const parsed: Mustache[] = [
       {
         type: "section",
+        scope: "global",
         name: ["user"],
         content: [],
       },
@@ -140,6 +50,7 @@ describe("genType", () => {
     const parsed: Mustache[] = [
       {
         type: "section",
+        scope: "global",
         name: ["user"],
         content: [
           { type: "variable", scope: "global", triple: false, name: ["name"] },
@@ -157,6 +68,7 @@ describe("genType", () => {
     const parsed: Mustache[] = [
       {
         type: "section",
+        scope: "global",
         name: ["user"],
         content: [
           { type: "variable", triple: false, name: ["name"], scope: "local" },
@@ -175,6 +87,7 @@ describe("genType", () => {
     const parsed: Mustache[] = [
       {
         type: "section",
+        scope: "global",
         name: ["user"],
         content: [
           { type: "variable", triple: false, name: ["name"], scope: "local" },
@@ -200,6 +113,7 @@ describe("genType", () => {
     const parsed: Mustache[] = [
       {
         type: "section",
+        scope: "global",
         name: ["user"],
         content: [
           { type: "variable", triple: false, name: ["name"], scope: "global" },
@@ -236,6 +150,7 @@ describe("genType", () => {
     const parsed: Mustache[] = [
       {
         type: "section",
+        scope: "global",
         name: ["user"],
         content: [
           {
@@ -262,6 +177,7 @@ describe("genType", () => {
     const parsed: Mustache[] = [
       {
         type: "section",
+        scope: "global",
         name: ["user"],
         content: [
           {
@@ -289,6 +205,7 @@ describe("genType", () => {
     const parsed: Mustache[] = [
       {
         type: "section",
+        scope: "global",
         name: ["user"],
         content: [
           {
@@ -411,6 +328,7 @@ describe("genType", () => {
       },
       {
         type: "section",
+        scope: "global",
         name: ["user"],
         content: [
           {
@@ -443,6 +361,7 @@ describe("genType", () => {
       },
       {
         type: "section",
+        scope: "global",
         name: ["user"],
         content: [
           {
@@ -471,6 +390,7 @@ describe("genType", () => {
     const parsed: Mustache[] = [
       {
         type: "section",
+        scope: "global",
         name: ["user"],
         content: [
           {
@@ -567,6 +487,7 @@ describe("genType", () => {
     const parsed: Mustache[] = [
       {
         type: "section",
+        scope: "global",
         name: ["person"],
         varType: {
           name: ["string", "number"],
@@ -596,6 +517,7 @@ describe("genType", () => {
     const parsed: Mustache[] = [
       {
         type: "section",
+        scope: "global",
         name: ["person"],
         varType: {
           optional: true,
