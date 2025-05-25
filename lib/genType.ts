@@ -2,6 +2,12 @@ import { Mustache, SectionTag, VariableTag } from "./types";
 
 const uniq = <T>(arr: T[]): T[] => Array.from(new Set(arr));
 
+const arraysEqual = (a: string[], b: string[]): boolean => {
+  const setA = new Set(a);
+  const setB = new Set(b);
+  return setA.size === setB.size && setA.intersection(setB).size === setA.size;
+};
+
 type BaseValue = {
   optional: boolean;
 };
@@ -32,6 +38,36 @@ class Generated {
     this.value = value;
   }
 
+  equals(value: GeneratedValue): boolean {
+    if (this.value.type !== value.type) {
+      return false;
+    }
+    if (this.value.type === "default") {
+      return this.value.optional === value.optional;
+    }
+    if (this.value.type === "object") {
+      const keys = Object.keys(this.value.internalVal);
+      // @ts-ignore
+      const otherKeys = Object.keys(value.internalVal);
+      if (!arraysEqual(keys, otherKeys)) {
+        return false;
+      }
+      for (const key of keys) {
+        // @ts-ignore
+        if (!this.value.internalVal[key].equals(value.internalVal[key].value)) {
+          return false;
+        }
+      }
+    } else if (this.value.type === "union") {
+      return arraysEqual(
+        this.value.internalVal,
+        // @ts-ignore
+        value.internalVal
+      );
+    }
+    return true;
+  }
+
   merge(value: GeneratedValue) {
     if (value.type === "default") {
       return;
@@ -43,13 +79,18 @@ class Generated {
         ...this.value.internalVal,
         ...value.internalVal,
       };
-    } else if (this.value.type === "union" && value.type === "union") {
-      this.value.internalVal = uniq<string>([
-        ...this.value.internalVal,
-        ...value.internalVal,
-      ]);
+    } else if (this.equals(value)) {
+      // same type and same value, do nothing
     } else {
-      throw new Error(`Cannot merge ${this.value.type} with ${value.type}`);
+      throw new Error(
+        `Cannot merge ${this.value.type} with ${
+          value.type
+        }: Tried to merge ${JSON.stringify(
+          this.value,
+          null,
+          2
+        )} with ${JSON.stringify(value, null, 2)}`
+      );
     }
   }
 
@@ -173,9 +214,13 @@ const setSection = (generated: Generated, mustache: SectionTag) => {
       internalVal: mustache.varType?.name || ["boolean"],
       optional: mustache.varType?.optional || false,
     });
+  } else {
+    generated.setPath(mustache.name, {
+      type: "object",
+      internalVal: {},
+      optional: mustache.varType?.optional || false,
+    });
   }
-
-  //console.log({ nestedVars });
 
   nestedVars.forEach((variable: VariableTag) => {
     if (variable.scope === "global") {
@@ -188,11 +233,6 @@ const setSection = (generated: Generated, mustache: SectionTag) => {
       return;
     }
   });
-  /*   // is this optional?
-  // This, unfortunately, has to come after we have processed all the nested variables
-  if (content.varType?.optional) {
-    deepSet(obj, content.name, OPTIONAL);
-  } */
 };
 
 const defaultGenerated = (): Generated =>
