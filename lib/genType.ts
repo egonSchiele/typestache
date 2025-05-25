@@ -144,6 +144,80 @@ class Generated {
     throw new Error(`Cannot check optional on ${this.value}`);
   }
 
+  walk(parsed: Mustache[]): Generated {
+    parsed.forEach((mustache: Mustache) => {
+      switch (mustache.type) {
+        case "variable":
+          return this.setVariable(mustache);
+        case "section":
+          return this.setSection(mustache);
+        case "inverted":
+          this.setPath(mustache.name, {
+            type: "union",
+            internalVal: ["boolean"],
+            optional: false,
+          });
+          this.walk(mustache.content);
+          return;
+        default:
+          break;
+      }
+    });
+    return this;
+  }
+
+  private setVariable(mustache: VariableTag) {
+    const hasExplicitType =
+      mustache.varType?.name && mustache.varType.name.length > 0;
+    let value: GeneratedValue;
+
+    if (hasExplicitType) {
+      value = {
+        type: "union",
+        internalVal: mustache.varType!.name || [],
+        optional: mustache.varType!.optional,
+      };
+    } else {
+      value = {
+        type: "default",
+        optional: mustache.varType?.optional || false,
+      };
+    }
+    this.setPath(mustache.name, value);
+  }
+
+  private setSection(mustache: SectionTag) {
+    const nestedVars = mustache.content.filter((c) => c.type === "variable");
+    const allGlobals = nestedVars.every((v) => v.scope === "global");
+    // no local vars, therefore boolean,
+    // also check if optional
+    if (nestedVars.length === 0 || allGlobals) {
+      this.setPath(mustache.name, {
+        type: "union",
+        internalVal: mustache.varType?.name || ["boolean"],
+        optional: mustache.varType?.optional || false,
+      });
+    } else {
+      this.setPath(mustache.name, {
+        type: "object",
+        internalVal: {},
+        optional: mustache.varType?.optional || false,
+      });
+    }
+
+    nestedVars.forEach((variable: VariableTag) => {
+      if (variable.scope === "global") {
+        this.setVariable(variable);
+        return;
+      } else if (variable.scope === "local") {
+        const fullVarName = [...mustache.name, ...variable.name];
+        const newVar = { ...variable, name: fullVarName };
+        this.setVariable(newVar);
+        return;
+      }
+    });
+  }
+
   private renderValue = (value: string[]): string => {
     return uniq(value).join(" | ");
   };
@@ -172,109 +246,19 @@ class Generated {
     }
     throw new Error(`Cannot render ${JSON.stringify(this.value, null, 2)}`);
   }
-  /* add(key: string, value: GeneratedValue) {
-    if (this.store[key]) {
-      throw new Error(`Key ${key} already exists in the store`);
-    }
-    this.store[key] = value;
-  }
-  private notAKey(key: string): boolean {
-    return typeof key !== "string" || parseInt(key) >= 0;
-  }; */
 }
-
-const setVariable = (generated: Generated, mustache: VariableTag) => {
-  const hasExplicitType =
-    mustache.varType?.name && mustache.varType.name.length > 0;
-  let value: GeneratedValue;
-
-  if (hasExplicitType) {
-    value = {
-      type: "union",
-      internalVal: mustache.varType!.name || [],
-      optional: mustache.varType!.optional,
-    };
-  } else {
-    value = {
-      type: "default",
-      optional: mustache.varType?.optional || false,
-    };
-  }
-  generated.setPath(mustache.name, value);
-};
-
-const setSection = (generated: Generated, mustache: SectionTag) => {
-  const nestedVars = mustache.content.filter((c) => c.type === "variable");
-  const allGlobals = nestedVars.every((v) => v.scope === "global");
-  // no local vars, therefore boolean,
-  // also check if optional
-  if (nestedVars.length === 0 || allGlobals) {
-    generated.setPath(mustache.name, {
-      type: "union",
-      internalVal: mustache.varType?.name || ["boolean"],
-      optional: mustache.varType?.optional || false,
-    });
-  } else {
-    generated.setPath(mustache.name, {
-      type: "object",
-      internalVal: {},
-      optional: mustache.varType?.optional || false,
-    });
-  }
-
-  nestedVars.forEach((variable: VariableTag) => {
-    if (variable.scope === "global") {
-      setVariable(generated, variable);
-      return;
-    } else if (variable.scope === "local") {
-      const fullVarName = [...mustache.name, ...variable.name];
-      const newVar = { ...variable, name: fullVarName };
-      setVariable(generated, newVar);
-      return;
-    }
-  });
-};
-
-const defaultGenerated = (): Generated =>
-  new Generated({
-    type: "object",
-    internalVal: {},
-    optional: false,
-  });
-const walk = (
-  parsed: Mustache[],
-  generated = defaultGenerated()
-): Generated => {
-  parsed.forEach((mustache: Mustache) => {
-    switch (mustache.type) {
-      case "variable":
-        return setVariable(generated, mustache);
-      case "section":
-        return setSection(generated, mustache);
-      case "inverted":
-        generated.setPath(mustache.name, {
-          type: "union",
-          internalVal: ["boolean"],
-          optional: false,
-        });
-        /*         walk(
-          mustache.content,
-          generated.value.internalVal[mustache.name[0]] as Generated
-        );
- */
-        return;
-      default:
-        break;
-    }
-  });
-  return generated;
-};
 
 export const render = (generated: Generated, level: number = 1): string => {
   return generated.render(level);
 };
 
 export const genType = (parsed: Mustache[]): string => {
-  const generated = walk(parsed);
+  const generated = new Generated({
+    type: "object",
+    internalVal: {},
+    optional: false,
+  });
+
+  generated.walk(parsed);
   return render(generated);
 };

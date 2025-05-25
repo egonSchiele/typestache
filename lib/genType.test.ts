@@ -544,3 +544,65 @@ describe("genType", () => {
 }`);
   });
 });
+
+describe("inverted sections", () => {
+  it("should generate a type for an inverted section", () => {
+    const parsed: Mustache[] = [
+      {
+        type: "inverted",
+        name: ["bool"],
+        content: [
+          {
+            type: "text",
+            content: "\nhi\n",
+          },
+        ],
+        scope: "global",
+      },
+    ];
+    const result = genType(parsed);
+    expect(result).toBe(`{
+  bool: boolean;
+}`);
+  });
+
+  it("should generate types for the contents of an inverted section", () => {
+    const parsed: Mustache[] = [
+      {
+        type: "inverted",
+        name: ["bool"],
+        content: [
+          {
+            type: "variable",
+            scope: "global",
+            name: ["name"],
+            varType: {
+              optional: false,
+            },
+            triple: false,
+          },
+          {
+            type: "text",
+            content: ": ",
+          },
+          {
+            type: "variable",
+            scope: "global",
+            name: ["value"],
+            varType: {
+              optional: false,
+            },
+            triple: false,
+          },
+        ],
+        scope: "global",
+      },
+    ];
+    const result = genType(parsed);
+    expect(result).toBe(`{
+  bool: boolean;
+  name: string | boolean | number;
+  value: string | boolean | number;
+}`);
+  });
+});
