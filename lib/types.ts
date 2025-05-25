@@ -7,7 +7,7 @@ export type MustacheTag =
   | PartialTag;
 
 export type VarType = {
-  name?: string[];
+  name?: string[]; // e.g. ["string", "number"]
   optional: boolean;
 };
 
@@ -28,6 +28,7 @@ export type SectionTag = {
   type: "section";
   name: string[];
   content: Mustache[];
+  scope: "local" | "global";
   varType?: VarType;
 };
 
@@ -35,6 +36,7 @@ export type InvertedTag = {
   type: "inverted";
   name: string[];
   content: Mustache[];
+  scope: "local" | "global";
 };
 
 export type CommentTag = {

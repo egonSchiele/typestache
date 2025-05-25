@@ -143,6 +143,7 @@ describe("Variable tags", () => {
       {
         type: "section",
         name: ["person"],
+        scope: "global",
         varType: {
           name: ["string", "number"],
           optional: false,
@@ -172,6 +173,7 @@ describe("Variable tags", () => {
       {
         type: "section",
         name: ["person"],
+        scope: "global",
         varType: {
           optional: true,
         },
@@ -200,6 +202,7 @@ describe("Variable tags", () => {
       {
         type: "section",
         name: ["person"],
+        scope: "global",
         varType: {
           name: ["string", "number"],
           optional: true,
