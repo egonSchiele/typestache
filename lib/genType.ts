@@ -4,9 +4,9 @@ const FgGreen = "\x1b[32m";
 const FgRed = "\x1b[31m";
 const FgReset = "\x1b[0m";
 
-const DEBUG = !!process.env.STACHEDEBUG;
+const DEBUG = !!process.env.TYPESTACHE_DEBUG;
 if (DEBUG) {
-  console.log(FgGreen, "DEBUG MODE ON", FgReset);
+  console.log(FgGreen, "TYPESTACHE DEBUG MODE ON", FgReset);
 }
 const uniq = <T>(arr: T[]): T[] => Array.from(new Set(arr));
 
@@ -25,7 +25,7 @@ const debug = (...args: any[]): void => {
       }
       return arg;
     });
-    console.log(FgRed, args[0], FgReset, ...json);
+    console.log(FgYellow, args[0], FgReset, ...json);
   }
 };
 

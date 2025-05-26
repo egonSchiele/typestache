@@ -108,7 +108,7 @@ const captureSectionWithScope = (captures: any): any => {
   } else if (captures.name[0] === "global") {
     return {
       ...captures,
-      scope: "global", 
+      scope: "global",
       name: captures.name.slice(1),
     };
   }
@@ -270,4 +270,15 @@ const invertedTag: Parser<InvertedTag> = map(
   captureSectionWithScope
 );
 
-export const mustacheParser: Parser<Mustache[]> = createMustacheParser();
+export const mustacheParser: Parser<Mustache[]> = (input: string) => {
+  const result = createMustacheParser()(input);
+  if (result.success) {
+    if (result.rest.length > 0) {
+      return failure(
+        `Unexpected characters after parsing mustache template.`,
+        result.rest
+      );
+    }
+  }
+  return result;
+};

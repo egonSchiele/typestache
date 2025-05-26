@@ -1,7 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { genType } from "./genType.js";
 import { Mustache } from "./types.js";
+import { mustacheParser } from "./mustacheParser.js";
 const DEFAULT_TYPE = "__DEFAULT_TYPE__";
+
+function expectTemplateToEqual(template: string, expected: string) {
+  const parsed = mustacheParser(template);
+  expect(parsed.success).toBe(true);
+  if (!parsed.success) return;
+  const result = genType(parsed.result);
+  expect(result).toBe(expected);
+}
 
 describe("genType", () => {
   it("should generate a type for a single variable", () => {
@@ -609,190 +618,97 @@ describe("inverted sections", () => {
 
 describe("nested sections", () => {
   it("should generate a type for a nested section with local content correctly", () => {
-    const parsed: Mustache[] = [
-      {
-        type: "section",
-        name: ["outer"],
-        varType: {
-          optional: false,
-        },
-        content: [
-          {
-            type: "text",
-            content: "\n",
-          },
-          {
-            type: "section",
-            name: ["inner"],
-            varType: {
-              optional: false,
-            },
-            content: [
-              {
-                type: "text",
-                content: "\nHi, ",
-              },
-              {
-                type: "variable",
-                scope: "local",
-                name: ["name"],
-                varType: {
-                  optional: false,
-                },
-                triple: false,
-              },
-              {
-                type: "text",
-                content: "!\n",
-              },
-            ],
-            scope: "global",
-          },
-          {
-            type: "text",
-            content: "\n",
-          },
-        ],
-        scope: "global",
-      },
-    ];
-    const result = genType(parsed);
-    expect(result).toBe(`{
+    const template = `
+    {{#outer}}
+{{#inner}}
+Hi, {{this.name}}!
+{{/inner}}
+{{/outer}}`;
+    const expected = `{
   outer: boolean;
   inner: {
     name: string | boolean | number;
   };
-}`);
+}`;
+    expectTemplateToEqual(template, expected);
   });
 
   it("should generate a type for a nested section with local content correctly", () => {
-    const parsed: Mustache[] = [
-      {
-        type: "section",
-        name: ["outer"],
-        varType: {
-          optional: false,
-        },
-        content: [
-          {
-            type: "text",
-            content: "\n",
-          },
-          {
-            type: "section",
-            name: ["inner"],
-            varType: {
-              optional: false,
-            },
-            content: [
-              {
-                type: "text",
-                content: "\nHi, ",
-              },
-              {
-                type: "variable",
-                scope: "local",
-                name: ["name"],
-                varType: {
-                  optional: false,
-                },
-                triple: false,
-              },
-              {
-                type: "text",
-                content: "!\n",
-              },
-            ],
-            scope: "local",
-          },
-          {
-            type: "text",
-            content: "\n",
-          },
-        ],
-        scope: "global",
-      },
-    ];
-    const result = genType(parsed);
-    expect(result).toBe(`{
+    const template = `
+    {{#outer}}
+{{#this.inner}}
+Hi, {{this.name}}!
+{{/inner}}
+{{/outer}}`;
+    const expected = `{
   outer: {
     inner: {
       name: string | boolean | number;
     };
   };
-}`);
+}`;
+    expectTemplateToEqual(template, expected);
   });
 
   it("should generate a type for a nested section with inner and outer local vars, plus a type def", () => {
-    const parsed: Mustache[] = [
-      {
-        type: "section",
-        name: ["outer"],
-        varType: {
-          optional: false,
-        },
-        content: [
-          {
-            type: "text",
-            content: "\n",
-          },
-          {
-            type: "variable",
-            scope: "local",
-            name: ["outerVar"],
-            varType: {
-              name: ["number"],
-              optional: false,
-            },
-            triple: false,
-          },
-          {
-            type: "text",
-            content: "\n",
-          },
-          {
-            type: "section",
-            name: ["inner"],
-            varType: {
-              optional: false,
-            },
-            content: [
-              {
-                type: "text",
-                content: "\nHi, ",
-              },
-              {
-                type: "variable",
-                scope: "local",
-                name: ["name"],
-                varType: {
-                  optional: false,
-                },
-                triple: false,
-              },
-              {
-                type: "text",
-                content: "!\n",
-              },
-            ],
-            scope: "local",
-          },
-          {
-            type: "text",
-            content: "\n",
-          },
-        ],
-        scope: "global",
-      },
-    ];
-    const result = genType(parsed);
-    expect(result).toBe(`{
+    const template = `
+  {{#outer}}
+{{this.outerVar:number}}
+{{#this.inner}}
+Hi, {{this.name}}!
+{{{wow}}}
+{{/this.inner}}
+{{/outer}}`;
+
+    const expected = `{
   outer: {
     outerVar: number;
     inner: {
       name: string | boolean | number;
     };
   };
-}`);
+  wow: string | boolean | number;
+}`;
+    expectTemplateToEqual(template, expected);
+  });
+
+  it("should generate a type for a nested section and nested inverted section that both reference the same value", () => {
+    const template = `{{#outer}}
+{{#this.condition}}
+Its true!
+{{/this.condition}}
+{{^this.condition}}
+Its false!
+{{/this.condition}}
+{{/outer}}`;
+    const expected = `{
+  outer: {
+    condition: boolean;
+  };
+}`;
+    expectTemplateToEqual(template, expected);
+  });
+
+  it("should throw an error for a nested section and nested inverted section that both reference the same value but with different types", () => {
+    // inverted section is boolean implicitly, can't change. Section is string
+    const template = `{{#outer}}
+{{#this.condition:string}}
+Its true!
+{{/this.condition}}
+{{^this.condition}}
+Its false!
+{{/this.condition}}
+{{/outer}}`;
+    const expected = `{
+  outer: {
+    condition: boolean;
+  };
+}`;
+    expect(() => {
+      const parsed = mustacheParser(template);
+      expect(parsed.success).toBe(true);
+      if (!parsed.success) return;
+      genType(parsed.result);
+    }).toThrowError();
   });
 });
