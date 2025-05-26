@@ -1,5 +1,13 @@
-import { Mustache, SectionTag, VariableTag } from "./types";
+import { InvertedTag, Mustache, SectionTag, VariableTag } from "./types";
+const FgYellow = "\x1b[33m";
+const FgGreen = "\x1b[32m";
+const FgRed = "\x1b[31m";
+const FgReset = "\x1b[0m";
 
+const DEBUG = !!process.env.STACHEDEBUG;
+if (DEBUG) {
+  console.log(FgGreen, "DEBUG MODE ON", FgReset);
+}
 const uniq = <T>(arr: T[]): T[] => Array.from(new Set(arr));
 
 const arraysEqual = (a: string[], b: string[]): boolean => {
@@ -7,6 +15,29 @@ const arraysEqual = (a: string[], b: string[]): boolean => {
   const setB = new Set(b);
   return setA.size === setB.size && setA.intersection(setB).size === setA.size;
 };
+
+const debug = (...args: any[]): void => {
+  if (DEBUG) {
+    const rest = args.slice(1);
+    const json = rest.map((arg) => {
+      if (typeof arg === "object") {
+        return JSON.stringify(arg, null, 2);
+      }
+      return arg;
+    });
+    console.log(FgRed, args[0], FgReset, ...json);
+  }
+};
+
+function hasScope(
+  mustache: Mustache
+): mustache is SectionTag | InvertedTag | VariableTag {
+  return (
+    mustache.type === "section" ||
+    mustache.type === "inverted" ||
+    mustache.type === "variable"
+  );
+}
 
 type BaseValue = {
   optional: boolean;
@@ -69,6 +100,7 @@ class Generated {
   }
 
   merge(value: GeneratedValue) {
+    debug("MERGE", "this.value:", this.value, { value });
     if (value.type === "default") {
       return;
     }
@@ -110,8 +142,17 @@ class Generated {
   }
 
   setPath(path: string[], value: GeneratedValue) {
+    debug("SET PATH", { path, value });
     if (this.value.type !== "object") {
-      throw new Error("Cannot set path on non-object type");
+      throw new Error(
+        `Cannot set path on non-object type. path: ${JSON.stringify(
+          path
+        )}, value: ${JSON.stringify(
+          value,
+          null,
+          2
+        )}, this.value: ${JSON.stringify(this.value, null, 2)}`
+      );
     }
     if (path.length === 0) {
       return;
@@ -144,20 +185,18 @@ class Generated {
     throw new Error(`Cannot check optional on ${this.value}`);
   }
 
-  walk(parsed: Mustache[]): Generated {
+  walk(parsed: Mustache[], scopeNames: string[] = []): Generated {
+    debug("WALK", { scopeNames });
     parsed.forEach((mustache: Mustache) => {
+      // @ts-ignore
+      debug("\t->", mustache.type, mustache.name || "");
       switch (mustache.type) {
         case "variable":
-          return this.setVariable(mustache);
+          return this.setVariable(mustache, scopeNames);
         case "section":
-          return this.setSection(mustache);
+          return this.setSection(mustache, scopeNames);
         case "inverted":
-          this.setPath(mustache.name, {
-            type: "union",
-            internalVal: ["boolean"],
-            optional: false,
-          });
-          this.walk(mustache.content);
+          return this.setInverted(mustache, scopeNames);
           return;
         default:
           break;
@@ -166,7 +205,8 @@ class Generated {
     return this;
   }
 
-  private setVariable(mustache: VariableTag) {
+  private setVariable(mustache: VariableTag, scopeNames: string[] = []) {
+    debug("SET VARIABLE", { mustache, scopeNames });
     const hasExplicitType =
       mustache.varType?.name && mustache.varType.name.length > 0;
     let value: GeneratedValue;
@@ -183,39 +223,64 @@ class Generated {
         optional: mustache.varType?.optional || false,
       };
     }
-    this.setPath(mustache.name, value);
+    let fullName = mustache.name;
+    if (mustache.scope === "local") {
+      fullName = [...scopeNames, ...mustache.name];
+    }
+    this.setPath(fullName, value);
   }
 
-  private setSection(mustache: SectionTag) {
-    const nestedVars = mustache.content.filter((c) => c.type === "variable");
-    const allGlobals = nestedVars.every((v) => v.scope === "global");
-    // no local vars, therefore boolean,
-    // also check if optional
-    if (nestedVars.length === 0 || allGlobals) {
-      this.setPath(mustache.name, {
+  private setSection(mustache: SectionTag, scopeNames: string[] = []) {
+    debug("SET SECTION", { name: mustache.name, scopeNames });
+    let fullName = mustache.name;
+    if (mustache.scope === "local") {
+      fullName = [...scopeNames, ...mustache.name];
+    }
+
+    const localVars = mustache.content.filter(
+      (c) => hasScope(c) && c.scope === "local"
+    );
+    // no local vars, therefore boolean
+    if (localVars.length === 0) {
+      this.setPath(fullName, {
         type: "union",
         internalVal: mustache.varType?.name || ["boolean"],
         optional: mustache.varType?.optional || false,
       });
     } else {
-      this.setPath(mustache.name, {
+      this.setPath(fullName, {
         type: "object",
         internalVal: {},
         optional: mustache.varType?.optional || false,
       });
     }
 
-    nestedVars.forEach((variable: VariableTag) => {
-      if (variable.scope === "global") {
-        this.setVariable(variable);
-        return;
-      } else if (variable.scope === "local") {
-        const fullVarName = [...mustache.name, ...variable.name];
-        const newVar = { ...variable, name: fullVarName };
-        this.setVariable(newVar);
-        return;
-      }
+    // NOTE: since we don't support going up the full scope chain,
+    // we assume that all variables in the section that are local,
+    // are local to this section.
+    //
+    // Which is why we don't do it this way:
+    //this.walk(mustache.content, [...scopeNames, ...mustache.name]);
+    if (mustache.scope === "local") {
+      this.walk(mustache.content, [...scopeNames, ...mustache.name]);
+    } else {
+      this.walk(mustache.content, mustache.name);
+    }
+  }
+
+  private setInverted(mustache: InvertedTag, scopeNames: string[] = []) {
+    debug("SET INVERTED", { name: mustache.name, scopeNames });
+    let fullName = mustache.name;
+    if (mustache.scope === "local") {
+      fullName = [...scopeNames, ...mustache.name];
+    }
+
+    this.setPath(fullName, {
+      type: "union",
+      internalVal: ["boolean"],
+      optional: false,
     });
+    this.walk(mustache.content, scopeNames);
   }
 
   private renderValue = (value: string[]): string => {

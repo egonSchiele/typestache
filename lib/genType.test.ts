@@ -606,3 +606,193 @@ describe("inverted sections", () => {
 }`);
   });
 });
+
+describe("nested sections", () => {
+  it("should generate a type for a nested section with local content correctly", () => {
+    const parsed: Mustache[] = [
+      {
+        type: "section",
+        name: ["outer"],
+        varType: {
+          optional: false,
+        },
+        content: [
+          {
+            type: "text",
+            content: "\n",
+          },
+          {
+            type: "section",
+            name: ["inner"],
+            varType: {
+              optional: false,
+            },
+            content: [
+              {
+                type: "text",
+                content: "\nHi, ",
+              },
+              {
+                type: "variable",
+                scope: "local",
+                name: ["name"],
+                varType: {
+                  optional: false,
+                },
+                triple: false,
+              },
+              {
+                type: "text",
+                content: "!\n",
+              },
+            ],
+            scope: "global",
+          },
+          {
+            type: "text",
+            content: "\n",
+          },
+        ],
+        scope: "global",
+      },
+    ];
+    const result = genType(parsed);
+    expect(result).toBe(`{
+  outer: boolean;
+  inner: {
+    name: string | boolean | number;
+  };
+}`);
+  });
+
+  it("should generate a type for a nested section with local content correctly", () => {
+    const parsed: Mustache[] = [
+      {
+        type: "section",
+        name: ["outer"],
+        varType: {
+          optional: false,
+        },
+        content: [
+          {
+            type: "text",
+            content: "\n",
+          },
+          {
+            type: "section",
+            name: ["inner"],
+            varType: {
+              optional: false,
+            },
+            content: [
+              {
+                type: "text",
+                content: "\nHi, ",
+              },
+              {
+                type: "variable",
+                scope: "local",
+                name: ["name"],
+                varType: {
+                  optional: false,
+                },
+                triple: false,
+              },
+              {
+                type: "text",
+                content: "!\n",
+              },
+            ],
+            scope: "local",
+          },
+          {
+            type: "text",
+            content: "\n",
+          },
+        ],
+        scope: "global",
+      },
+    ];
+    const result = genType(parsed);
+    expect(result).toBe(`{
+  outer: {
+    inner: {
+      name: string | boolean | number;
+    };
+  };
+}`);
+  });
+
+  it("should generate a type for a nested section with inner and outer local vars, plus a type def", () => {
+    const parsed: Mustache[] = [
+      {
+        type: "section",
+        name: ["outer"],
+        varType: {
+          optional: false,
+        },
+        content: [
+          {
+            type: "text",
+            content: "\n",
+          },
+          {
+            type: "variable",
+            scope: "local",
+            name: ["outerVar"],
+            varType: {
+              name: ["number"],
+              optional: false,
+            },
+            triple: false,
+          },
+          {
+            type: "text",
+            content: "\n",
+          },
+          {
+            type: "section",
+            name: ["inner"],
+            varType: {
+              optional: false,
+            },
+            content: [
+              {
+                type: "text",
+                content: "\nHi, ",
+              },
+              {
+                type: "variable",
+                scope: "local",
+                name: ["name"],
+                varType: {
+                  optional: false,
+                },
+                triple: false,
+              },
+              {
+                type: "text",
+                content: "!\n",
+              },
+            ],
+            scope: "local",
+          },
+          {
+            type: "text",
+            content: "\n",
+          },
+        ],
+        scope: "global",
+      },
+    ];
+    const result = genType(parsed);
+    expect(result).toBe(`{
+  outer: {
+    outerVar: number;
+    inner: {
+      name: string | boolean | number;
+    };
+  };
+}`);
+  });
+});
