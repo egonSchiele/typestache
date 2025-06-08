@@ -82,7 +82,7 @@ function writeTemplateFile(
 // Any manual changes will be lost.
 import { apply } from "typestache";
 
-export const template = \`${contents}\`;
+export const template = \`${contents.replaceAll("`", "\\`")}\`;
 
 export type TemplateType = ${genType(parsed)};
 
