@@ -55,6 +55,7 @@ type UnionValue = {
 type ObjectValue = {
   type: "object";
   internalVal: Record<string, Generated>;
+  isArray: boolean;
 } & BaseValue;
 
 type GeneratedValue = UnionValue | ObjectValue | DefaultValue;
@@ -137,22 +138,9 @@ class Generated {
       internalVal: {
         [key]: new Generated(nestedValue),
       },
+      isArray: false,
       optional: false,
     };
-  }
-
-  // Find the stored key that matches, accounting for [] suffix.
-  // e.g. looking up "people" should match "people[]" and vice versa.
-  private findKey(key: string): string | undefined {
-    if (this.value.type !== "object") return undefined;
-    if (this.value.internalVal[key]) return key;
-    const withBrackets = key + "[]";
-    if (this.value.internalVal[withBrackets]) return withBrackets;
-    if (key.endsWith("[]")) {
-      const withoutBrackets = key.slice(0, -2);
-      if (this.value.internalVal[withoutBrackets]) return withoutBrackets;
-    }
-    return undefined;
   }
 
   setPath(path: string[], value: GeneratedValue) {
@@ -172,17 +160,15 @@ class Generated {
       return;
     } else if (path.length === 1) {
       const key = path[0];
-      const existingKey = this.findKey(key);
-      if (existingKey) {
-        this.value.internalVal[existingKey].merge(value);
+      if (this.value.internalVal[key]) {
+        this.value.internalVal[key].merge(value);
       } else {
         this.value.internalVal[key] = new Generated(value);
       }
     } else {
       const key = path[0];
-      const existingKey = this.findKey(key);
-      if (existingKey) {
-        this.value.internalVal[existingKey].setPath(path.slice(1), value);
+      if (this.value.internalVal[key]) {
+        this.value.internalVal[key].setPath(path.slice(1), value);
       } else {
         const nestedValue = this.buildNestedObject(path.slice(1), value);
         this.value.internalVal[key] = new Generated(nestedValue);
@@ -191,14 +177,11 @@ class Generated {
   }
 
   isOptional(): boolean {
-    if (this.value.type === "object") {
-      return this.value.optional;
-    } else if (this.value.type === "union") {
-      return this.value.optional;
-    } else if (this.value.type === "default") {
-      return this.value.optional;
-    }
-    throw new Error(`Cannot check optional on ${this.value}`);
+    return this.value.optional;
+  }
+
+  isArray(): boolean {
+    return this.value.type === "object" && this.value.isArray;
   }
 
   walk(parsed: Mustache[], scopeNames: string[] = []): Generated {
@@ -253,29 +236,34 @@ class Generated {
       fullName = [...scopeNames, ...mustache.name];
     }
 
+    // Check if the name has explicit [] (e.g. {{#items[]}})
+    const lastSegment = fullName[fullName.length - 1];
+    const hasExplicitArray = lastSegment.endsWith("[]");
+    if (hasExplicitArray) {
+      fullName = [
+        ...fullName.slice(0, -1),
+        lastSegment.slice(0, -2),
+      ];
+    }
+
     const localVars = mustache.content.filter(
       (c) => hasScope(c) && c.scope === "local"
     );
-    // no local vars, therefore boolean
-    if (localVars.length === 0) {
+    const isArray = hasExplicitArray || localVars.length > 0;
+
+    if (!isArray) {
+      // no local vars and no explicit [], therefore boolean
       this.setPath(fullName, {
         type: "union",
         internalVal: mustache.varType?.name || ["boolean"],
         optional: mustache.varType?.optional || false,
       });
     } else {
-      // has local vars, so this is an array of objects.
-      // append [] to the last segment so render() emits an array type.
-      const lastSegment = fullName[fullName.length - 1];
-      if (!lastSegment.endsWith("[]")) {
-        fullName = [
-          ...fullName.slice(0, -1),
-          lastSegment + "[]",
-        ];
-      }
+      // array of objects
       this.setPath(fullName, {
         type: "object",
         internalVal: {},
+        isArray: true,
         optional: mustache.varType?.optional || false,
       });
     }
@@ -286,10 +274,16 @@ class Generated {
     //
     // Which is why we don't do it this way:
     //this.walk(mustache.content, [...scopeNames, ...mustache.name]);
+    // Use the cleaned fullName for scope ([] already stripped).
+    // For local sections, fullName already includes scopeNames,
+    // so we use mustache.name (without []) to avoid doubling.
+    const cleanName = hasExplicitArray
+      ? [...mustache.name.slice(0, -1), mustache.name[mustache.name.length - 1].slice(0, -2)]
+      : mustache.name;
     if (mustache.scope === "local") {
-      this.walk(mustache.content, [...scopeNames, ...mustache.name]);
+      this.walk(mustache.content, [...scopeNames, ...cleanName]);
     } else {
-      this.walk(mustache.content, mustache.name);
+      this.walk(mustache.content, cleanName);
     }
   }
 
@@ -316,14 +310,9 @@ class Generated {
     if (this.value.type === "object") {
       const lines = Object.entries(this.value.internalVal).map(
         ([key, value]) => {
-          let _key = key;
-          let arrayStr = "";
           const optStr = value.isOptional() ? "?" : "";
-          if (key.endsWith("[]")) {
-            _key = key.replace("[]", "");
-            arrayStr = "[]";
-          }
-          return `${"  ".repeat(level)}${_key}${optStr}: ${value.render(
+          const arrayStr = value.isArray() ? "[]" : "";
+          return `${"  ".repeat(level)}${key}${optStr}: ${value.render(
             level + 1
           )}${arrayStr};\n`;
         }
@@ -346,6 +335,7 @@ export const genType = (parsed: Mustache[]): string => {
   const generated = new Generated({
     type: "object",
     internalVal: {},
+    isArray: false,
     optional: false,
   });
 
