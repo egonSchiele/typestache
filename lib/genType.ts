@@ -141,6 +141,20 @@ class Generated {
     };
   }
 
+  // Find the stored key that matches, accounting for [] suffix.
+  // e.g. looking up "people" should match "people[]" and vice versa.
+  private findKey(key: string): string | undefined {
+    if (this.value.type !== "object") return undefined;
+    if (this.value.internalVal[key]) return key;
+    const withBrackets = key + "[]";
+    if (this.value.internalVal[withBrackets]) return withBrackets;
+    if (key.endsWith("[]")) {
+      const withoutBrackets = key.slice(0, -2);
+      if (this.value.internalVal[withoutBrackets]) return withoutBrackets;
+    }
+    return undefined;
+  }
+
   setPath(path: string[], value: GeneratedValue) {
     debug("SET PATH", { path, value });
     if (this.value.type !== "object") {
@@ -158,15 +172,17 @@ class Generated {
       return;
     } else if (path.length === 1) {
       const key = path[0];
-      if (this.value.internalVal[key]) {
-        this.value.internalVal[key].merge(value);
+      const existingKey = this.findKey(key);
+      if (existingKey) {
+        this.value.internalVal[existingKey].merge(value);
       } else {
         this.value.internalVal[key] = new Generated(value);
       }
     } else {
       const key = path[0];
-      if (this.value.internalVal[key]) {
-        this.value.internalVal[key].setPath(path.slice(1), value);
+      const existingKey = this.findKey(key);
+      if (existingKey) {
+        this.value.internalVal[existingKey].setPath(path.slice(1), value);
       } else {
         const nestedValue = this.buildNestedObject(path.slice(1), value);
         this.value.internalVal[key] = new Generated(nestedValue);
@@ -248,6 +264,15 @@ class Generated {
         optional: mustache.varType?.optional || false,
       });
     } else {
+      // has local vars, so this is an array of objects.
+      // append [] to the last segment so render() emits an array type.
+      const lastSegment = fullName[fullName.length - 1];
+      if (!lastSegment.endsWith("[]")) {
+        fullName = [
+          ...fullName.slice(0, -1),
+          lastSegment + "[]",
+        ];
+      }
       this.setPath(fullName, {
         type: "object",
         internalVal: {},
@@ -298,7 +323,7 @@ class Generated {
             _key = key.replace("[]", "");
             arrayStr = "[]";
           }
-          return `${"  ".repeat(level)}${key}${optStr}: ${value.render(
+          return `${"  ".repeat(level)}${_key}${optStr}: ${value.render(
             level + 1
           )}${arrayStr};\n`;
         }

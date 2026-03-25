@@ -88,7 +88,7 @@ describe("genType", () => {
     expect(result).toBe(`{
   user: {
     name: string | boolean | number;
-  };
+  }[];
 }`);
   });
 
@@ -113,7 +113,7 @@ describe("genType", () => {
     expect(result).toBe(`{
   user: {
     name: string | boolean | number;
-  };
+  }[];
   name: string | boolean | number;
 }`);
   });
@@ -206,7 +206,7 @@ describe("genType", () => {
     expect(result).toBe(`{
   user: {
     name: string;
-  };
+  }[];
 }`);
   });
 
@@ -391,7 +391,7 @@ describe("genType", () => {
   name: string;
   user: {
     name: number;
-  };
+  }[];
 }`);
   });
 
@@ -429,7 +429,7 @@ describe("genType", () => {
     expect(result).toBe(`{
   user: {
     name: string;
-  };
+  }[];
   name: number;
 }`);
   });
@@ -549,7 +549,7 @@ describe("genType", () => {
     expect(result).toBe(`{
   person?: {
     name: string;
-  };
+  }[];
 }`);
   });
 });
@@ -628,7 +628,7 @@ Hi, {{this.name}}!
   outer: boolean;
   inner: {
     name: string | boolean | number;
-  };
+  }[];
 }`;
     expectTemplateToEqual(template, expected);
   });
@@ -644,8 +644,8 @@ Hi, {{this.name}}!
   outer: {
     inner: {
       name: string | boolean | number;
-    };
-  };
+    }[];
+  }[];
 }`;
     expectTemplateToEqual(template, expected);
   });
@@ -665,8 +665,8 @@ Hi, {{this.name}}!
     outerVar: number;
     inner: {
       name: string | boolean | number;
-    };
-  };
+    }[];
+  }[];
   wow: string | boolean | number;
 }`;
     expectTemplateToEqual(template, expected);
@@ -684,7 +684,46 @@ Its false!
     const expected = `{
   outer: {
     condition: boolean;
-  };
+  }[];
+}`;
+    expectTemplateToEqual(template, expected);
+  });
+
+  it("a section with local vars should generate an array type", () => {
+    const template = `{{#people}}
+{{this.name}} is {{this.age}} years old.
+{{/people}}`;
+    const expected = `{
+  people: {
+    name: string | boolean | number;
+    age: string | boolean | number;
+  }[];
+}`;
+    expectTemplateToEqual(template, expected);
+  });
+
+  it("a nested section with local vars should generate an array type", () => {
+    const template = `{{#outer}}
+{{#this.people}}
+{{this.name}}
+{{/this.people}}
+{{/outer}}`;
+    const expected = `{
+  outer: {
+    people: {
+      name: string | boolean | number;
+    }[];
+  }[];
+}`;
+    expectTemplateToEqual(template, expected);
+  });
+
+  it("a section without local vars should not generate an array type", () => {
+    const template = `{{#show}}
+hello
+{{/show}}`;
+    const expected = `{
+  show: boolean;
 }`;
     expectTemplateToEqual(template, expected);
   });
@@ -710,5 +749,85 @@ Its false!
       if (!parsed.success) return;
       genType(parsed.result);
     }).toThrowError();
+  });
+});
+
+describe("explicit [] array syntax", () => {
+  it("should generate an array type for explicit [] in section name", () => {
+    const template = `{{#items[]}}{{this.name}}{{/items}}`;
+    const expected = `{
+  items: {
+    name: string | boolean | number;
+  }[];
+}`;
+    expectTemplateToEqual(template, expected);
+  });
+
+  it("should not double-append [] when section already has [] and local vars", () => {
+    const template = `{{#items[]}}{{this.val:string}}{{/items}}`;
+    const expected = `{
+  items: {
+    val: string;
+  }[];
+}`;
+    expectTemplateToEqual(template, expected);
+  });
+});
+
+describe("end-to-end template to type", () => {
+  it("simple variable", () => {
+    expectTemplateToEqual(`Hello {{name}}!`, `{
+  name: string | boolean | number;
+}`);
+  });
+
+  it("variable with type hint", () => {
+    expectTemplateToEqual(`{{count:number}} items`, `{
+  count: number;
+}`);
+  });
+
+  it("optional variable with type hint", () => {
+    expectTemplateToEqual(`{{name?:string}}`, `{
+  name?: string;
+}`);
+  });
+
+  it("section as boolean", () => {
+    expectTemplateToEqual(`{{#show}}hello{{/show}}`, `{
+  show: boolean;
+}`);
+  });
+
+  it("inverted section", () => {
+    expectTemplateToEqual(`{{^hidden}}visible{{/hidden}}`, `{
+  hidden: boolean;
+}`);
+  });
+
+  it("section with global var inside", () => {
+    expectTemplateToEqual(`{{#show}}{{message}}{{/show}}`, `{
+  show: boolean;
+  message: string | boolean | number;
+}`);
+  });
+
+  it("multiple variables", () => {
+    expectTemplateToEqual(`{{first}} {{last}}`, `{
+  first: string | boolean | number;
+  last: string | boolean | number;
+}`);
+  });
+
+  it("comments are ignored in type generation", () => {
+    expectTemplateToEqual(`{{! comment }}{{name}}`, `{
+  name: string | boolean | number;
+}`);
+  });
+
+  it("union type hint", () => {
+    expectTemplateToEqual(`{{value:string|number}}`, `{
+  value: string | number;
+}`);
   });
 });
