@@ -9,7 +9,8 @@
     "coverage": "vitest --coverage",
     "build": "rm -rf dist && tsc",
     "start": "cd dist && node index.js",
-    "gen": "node ./dist/scripts/typestache.js -v examples"
+    "gen": "node ./dist/scripts/typestache.js -v examples",
+    "compile": "node ./dist/scripts/typestache.js"
   },
   "files": [
     "./dist/lib"
