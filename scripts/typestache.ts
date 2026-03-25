@@ -35,29 +35,42 @@ program
   .name("typestache")
   .description("Generate TypeScript types from mustache templates")
   .version("0.3.0")
-  .argument("<directory>", "directory to process")
+  .argument("<path>", "directory or .mustache file to process")
   .option("-d, --dry-run", "show what would be done without making changes")
   .option("-v, --verbose", "enable verbose output")
   .parse();
 
 const options = program.opts();
-const dirName = program.args[0];
+const targetPath = program.args[0];
 
-if (!fs.existsSync(dirName)) {
-  console.error(`Directory ${dirName} does not exist.`);
-  process.exit(1);
-} else if (!fs.lstatSync(dirName).isDirectory()) {
-  console.error(`${dirName} is not a directory.`);
+if (!fs.existsSync(targetPath)) {
+  console.error(`${targetPath} does not exist.`);
   process.exit(1);
 }
+
+const isFile = fs.lstatSync(targetPath).isFile();
+const isDirectory = fs.lstatSync(targetPath).isDirectory();
+
+if (!isFile && !isDirectory) {
+  console.error(`${targetPath} is not a file or directory.`);
+  process.exit(1);
+}
+
+if (isFile && !targetPath.endsWith(".mustache")) {
+  console.error(`${targetPath} is not a .mustache file.`);
+  process.exit(1);
+}
+
 if (options.verbose) {
   console.log("==========================");
-  console.log("Directory name:", FgYellow, dirName, FgReset);
-  console.log("Absolute path: ", path.resolve(dirName));
+  console.log(isFile ? "File name:" : "Directory name:", FgYellow, targetPath, FgReset);
+  console.log("Absolute path: ", path.resolve(targetPath));
   console.log("==========================\n");
 }
 
-var templateFiles = findFilesRecursively(dirName, ".mustache");
+var templateFiles = isFile
+  ? [targetPath]
+  : findFilesRecursively(targetPath, ".mustache");
 templateFiles.forEach(function (templateFile) {
   if (options.verbose) {
     console.log(`${FgYellow}PROCESSING`, FgReset, templateFile);
