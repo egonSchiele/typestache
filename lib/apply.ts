@@ -29,7 +29,11 @@ export const _applyParsed = (
         );
       }
       if (content.type === "section") {
-        const value = deepSeek(obj, [...content.name], [...currentContext]);
+        const value = deepSeek(
+          obj,
+          normalizeSectionName(content.name),
+          [...currentContext]
+        );
         if (!value) {
           return "";
         } else if (Array.isArray(value)) {
@@ -155,6 +159,17 @@ const deepSeek = (
     current = current[key];
   }
   return current;
+};
+
+const normalizeSectionName = (name: string[]): string[] => {
+  if (name.length === 0) {
+    return name;
+  }
+  const lastName = name[name.length - 1];
+  if (lastName.endsWith("[]")) {
+    return [...name.slice(0, -1), lastName.slice(0, -2)];
+  }
+  return name;
 };
 
 const escapedCharacters: { [key: string]: string } = {
