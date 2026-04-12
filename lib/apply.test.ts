@@ -168,6 +168,18 @@ describe("array iteration", () => {
       "Springfield: Alice is 30. Bob is 25. Shelbyville: Charlie is 40. "
     );
   });
+
+  it("should iterate over arrays with explicit [] section syntax", () => {
+    const template = "{{#params[]}}{{this.name}}={{this.index}};{{/params}}";
+    const context = {
+      params: [
+        { name: "foo", index: 0 },
+        { name: "bar", index: 1 },
+      ],
+    };
+    const result = apply(template, context);
+    expect(result).toBe("foo=0;bar=1;");
+  });
 });
 
 describe("HTML escaping", () => {
